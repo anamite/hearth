@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    /* A warm ember glow behind everything — the "hearth". */
+    background:
+      radial-gradient(120% 80% at 50% -10%, #241a1d 0%, transparent 60%),
+      #0E0D12;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  /* Secret cards must never be selectable or long-press-copyable. */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+@layer components {
+  .screen {
+    @apply mx-auto flex min-h-full w-full max-w-md flex-col px-5 pb-6;
+    padding-top: max(1.25rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .btn {
+    @apply inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl
+           px-5 text-base font-semibold transition
+           active:scale-[0.985] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-primary { @apply btn bg-ember text-ink shadow-lg shadow-ember/20; }
+  .btn-ghost   { @apply btn border border-edge bg-ash/60 text-chalk; }
+  .btn-quiet   { @apply btn bg-transparent text-mute; }
+  .btn-danger  { @apply btn border border-blood/40 bg-blood/10 text-blood; }
+
+  .card {
+    @apply rounded-3xl border border-edge/70 bg-ash/70 p-5 backdrop-blur;
+  }
+
+  .field {
+    @apply w-full rounded-2xl border border-edge bg-ink/60 px-4 py-3.5 text-base text-chalk
+           placeholder:text-mute/60 focus:border-ember focus:outline-none;
+  }
+
+  .label { @apply mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-mute; }
+
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-edge/80 bg-ash/70
+           px-2.5 py-1 text-xs font-medium text-mute;
+  }
+
+  .title { @apply font-display text-[2rem] leading-[1.1] tracking-tight text-chalk; }
+  .subtitle { @apply text-sm leading-relaxed text-mute; }
+}
+
+/* The dial and the drawing canvas must not scroll the page under a drag. */
+.touch-none-safe { touch-action: none; }

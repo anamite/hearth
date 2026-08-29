@@ -1,0 +1,6 @@
+project_id = "hearth"
+
+[functions.verify-turnstile]
+# Turnstile runs before the player has any session, so this endpoint must
+# be reachable without a JWT.
+verify_jwt = false

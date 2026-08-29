@@ -1,0 +1,13 @@
+{
+  "name": "Hearth",
+  "short_name": "Hearth",
+  "description": "Party games for people in the same room.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E0D12",
+  "theme_color": "#0E0D12",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

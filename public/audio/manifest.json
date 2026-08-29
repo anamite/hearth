@@ -1,0 +1,159 @@
+{
+  "clips": {
+    "names/baker": [
+      "names/baker.mp3"
+    ],
+    "names/miller": [
+      "names/miller.mp3"
+    ],
+    "names/fletcher": [
+      "names/fletcher.mp3"
+    ],
+    "names/mason": [
+      "names/mason.mp3"
+    ],
+    "names/cooper": [
+      "names/cooper.mp3"
+    ],
+    "names/sawyer": [
+      "names/sawyer.mp3"
+    ],
+    "names/fox": [
+      "names/fox.mp3"
+    ],
+    "names/wren": [
+      "names/wren.mp3"
+    ],
+    "names/pike": [
+      "names/pike.mp3"
+    ],
+    "names/crow": [
+      "names/crow.mp3"
+    ],
+    "names/hare": [
+      "names/hare.mp3"
+    ],
+    "names/moth": [
+      "names/moth.mp3"
+    ],
+    "names/ash": [
+      "names/ash.mp3"
+    ],
+    "names/birch": [
+      "names/birch.mp3"
+    ],
+    "names/cove": [
+      "names/cove.mp3"
+    ],
+    "names/fern": [
+      "names/fern.mp3"
+    ],
+    "names/reed": [
+      "names/reed.mp3"
+    ],
+    "names/vale": [
+      "names/vale.mp3"
+    ],
+    "names/ember": [
+      "names/ember.mp3"
+    ],
+    "names/frost": [
+      "names/frost.mp3"
+    ],
+    "names/dusk": [
+      "names/dusk.mp3"
+    ],
+    "names/flint": [
+      "names/flint.mp3"
+    ],
+    "names/slate": [
+      "names/slate.mp3"
+    ],
+    "names/wick": [
+      "names/wick.mp3"
+    ],
+    "cues/night_falls": [
+      "cues/night_falls_1.mp3",
+      "cues/night_falls_2.mp3",
+      "cues/night_falls_3.mp3",
+      "cues/night_falls_4.mp3"
+    ],
+    "cues/wolves_wake": [
+      "cues/wolves_wake_1.mp3",
+      "cues/wolves_wake_2.mp3",
+      "cues/wolves_wake_3.mp3",
+      "cues/wolves_wake_4.mp3"
+    ],
+    "cues/wolves_sleep": [
+      "cues/wolves_sleep_1.mp3",
+      "cues/wolves_sleep_2.mp3",
+      "cues/wolves_sleep_3.mp3",
+      "cues/wolves_sleep_4.mp3"
+    ],
+    "cues/seer_wake": [
+      "cues/seer_wake_1.mp3",
+      "cues/seer_wake_2.mp3",
+      "cues/seer_wake_3.mp3",
+      "cues/seer_wake_4.mp3"
+    ],
+    "cues/seer_sleep": [
+      "cues/seer_sleep_1.mp3",
+      "cues/seer_sleep_2.mp3",
+      "cues/seer_sleep_3.mp3",
+      "cues/seer_sleep_4.mp3"
+    ],
+    "cues/doctor_wake": [
+      "cues/doctor_wake_1.mp3",
+      "cues/doctor_wake_2.mp3",
+      "cues/doctor_wake_3.mp3",
+      "cues/doctor_wake_4.mp3"
+    ],
+    "cues/doctor_sleep": [
+      "cues/doctor_sleep_1.mp3",
+      "cues/doctor_sleep_2.mp3",
+      "cues/doctor_sleep_3.mp3",
+      "cues/doctor_sleep_4.mp3"
+    ],
+    "cues/morning_comes": [
+      "cues/morning_comes_1.mp3",
+      "cues/morning_comes_2.mp3",
+      "cues/morning_comes_3.mp3",
+      "cues/morning_comes_4.mp3"
+    ],
+    "outcomes/died": [
+      "outcomes/died_1.mp3",
+      "outcomes/died_2.mp3",
+      "outcomes/died_3.mp3"
+    ],
+    "outcomes/survived": [
+      "outcomes/survived_1.mp3",
+      "outcomes/survived_2.mp3",
+      "outcomes/survived_3.mp3"
+    ],
+    "outcomes/voted_out": [
+      "outcomes/voted_out_1.mp3",
+      "outcomes/voted_out_2.mp3",
+      "outcomes/voted_out_3.mp3"
+    ],
+    "outcomes/no_majority": [
+      "outcomes/no_majority_1.mp3",
+      "outcomes/no_majority_2.mp3",
+      "outcomes/no_majority_3.mp3"
+    ],
+    "outcomes/village_wins": [
+      "outcomes/village_wins_1.mp3",
+      "outcomes/village_wins_2.mp3",
+      "outcomes/village_wins_3.mp3"
+    ],
+    "outcomes/wolves_wins": [
+      "outcomes/wolves_wins_1.mp3",
+      "outcomes/wolves_wins_2.mp3",
+      "outcomes/wolves_wins_3.mp3"
+    ],
+    "outcomes/left": [
+      "outcomes/left_1.mp3",
+      "outcomes/left_2.mp3",
+      "outcomes/left_3.mp3"
+    ]
+  }
+}
