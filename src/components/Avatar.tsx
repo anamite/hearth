@@ -148,16 +148,24 @@ export function AvatarBadge({
   ring?: string;
   dimmed?: boolean;
 }) {
+  const color = avatarColor(avatarKey);
   return (
     <span
-      className="inline-flex items-center justify-center rounded-2xl bg-ink/70"
+      className="inline-flex shrink-0 items-center justify-center rounded-2xl border-2 border-black/40"
       style={{
         width: size,
         height: size,
-        boxShadow: ring ? `0 0 0 2.5px ${ring}` : undefined,
+        // A tint of the avatar's own colour, so a grid of faces reads as a
+        // set of chunky stickers rather than a row of dark squares.
+        background: dimmed
+          ? '#161522'
+          : `linear-gradient(150deg, ${color}33, rgba(11,10,16,0.9))`,
+        boxShadow: ring
+          ? `0 0 0 3px ${ring}, 0 3px 0 0 rgba(0,0,0,0.5)`
+          : '0 3px 0 0 rgba(0,0,0,0.45)',
       }}
     >
-      <Avatar avatarKey={avatarKey} size={Math.round(size * 0.74)} dimmed={dimmed} />
+      <Avatar avatarKey={avatarKey} size={Math.round(size * 0.72)} dimmed={dimmed} />
     </span>
   );
 }

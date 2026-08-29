@@ -5,6 +5,7 @@ import type {
 } from '@/types';
 import { HearthError, type ErrorCode } from '@/types';
 import type { Backend } from './types';
+import { SUPABASE_KEY, SUPABASE_URL } from './env';
 
 const KNOWN_CODES = new Set<ErrorCode>([
   'not_a_member', 'wrong_phase', 'not_your_turn', 'already_acted', 'invalid_target',
@@ -30,11 +31,8 @@ export class SupabaseBackend implements Backend {
   private uid = '';
   private channels = new Map<string, ReturnType<SupabaseClient['channel']>>();
 
-  constructor(
-    url = import.meta.env.VITE_SUPABASE_URL as string,
-    anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string,
-  ) {
-    this.client = createClient(url, anonKey, {
+  constructor(url = SUPABASE_URL, publishableKey = SUPABASE_KEY) {
+    this.client = createClient(url, publishableKey, {
       auth: { persistSession: true, autoRefreshToken: true },
     });
   }

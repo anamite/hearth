@@ -3,7 +3,9 @@
 interface ImportMetaEnv {
   readonly VITE_BACKEND?: 'mock' | 'supabase';
   readonly VITE_SUPABASE_URL?: string;
+  /** Legacy JWT key, or its modern `sb_publishable_…` replacement below. */
   readonly VITE_SUPABASE_ANON_KEY?: string;
+  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   readonly VITE_TURNSTILE_SITE_KEY?: string;
 }
 interface ImportMeta {

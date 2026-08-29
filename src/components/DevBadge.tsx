@@ -13,7 +13,7 @@ export function DevBadge() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-3 left-3 z-40 rounded-full border border-edge bg-ash/90 px-2.5 py-1 font-mono text-[0.6rem] text-mute backdrop-blur"
+        className="fixed bottom-3 right-3 z-40 rounded-full border-2 border-edge bg-ash/95 px-2.5 py-1 font-mono text-[0.6rem] font-bold text-mute shadow-pop-sm backdrop-blur"
       >
         local · {uid.slice(0, 4)}
       </button>
@@ -21,9 +21,9 @@ export function DevBadge() {
   }
 
   return (
-    <div className="fixed bottom-3 left-3 z-40 w-60 rounded-2xl border border-edge bg-ash/95 p-3 text-xs backdrop-blur">
+    <div className="fixed bottom-3 right-3 z-40 w-60 rounded-2xl border-2 border-edge bg-ash/97 p-3 text-xs shadow-pop backdrop-blur">
       <div className="mb-2 flex items-center justify-between">
-        <span className="font-semibold text-chalk">Local mode</span>
+        <span className="font-extrabold uppercase tracking-wider text-chalk">Local mode</span>
         <button onClick={() => setOpen(false)} className="text-mute">
           ✕
         </button>
@@ -34,7 +34,7 @@ export function DevBadge() {
       </p>
       <div className="space-y-1.5">
         <button
-          className="w-full rounded-lg border border-edge py-1.5 text-mute"
+          className="w-full rounded-xl border-2 border-edge bg-slatey/60 py-1.5 font-bold text-mute"
           onClick={() => {
             resetMockIdentity();
             location.href = '/';
@@ -43,7 +43,7 @@ export function DevBadge() {
           Become a new player
         </button>
         <button
-          className="w-full rounded-lg border border-blood/40 py-1.5 text-blood"
+          className="w-full rounded-xl border-2 border-blood/50 bg-blood/10 py-1.5 font-bold text-blood"
           onClick={() => {
             if (!confirm('Wipe all local groups and games?')) return;
             resetDb();

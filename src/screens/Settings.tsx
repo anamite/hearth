@@ -7,6 +7,7 @@ import { GAMES } from '@/games/manifest';
 import type { SettingField } from '@/games/types';
 import { useLocalStorage } from '@/lib/hooks';
 import { ErrorNote, Loading, Screen, Spacer, TopBar } from '@/components/ui';
+import { GameCharacter } from '@/components/art';
 
 function Toggle({
   checked,
@@ -20,14 +21,13 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-        checked ? 'bg-ember' : 'bg-edge'
+      className={`relative h-8 w-14 shrink-0 rounded-full border-2 transition ${
+        checked ? 'border-black/40 bg-accent' : 'border-edge bg-ink/60'
       }`}
     >
       <span
-        className={`absolute top-1 h-5 w-5 rounded-full bg-chalk transition-all ${
-          checked ? 'left-6' : 'left-1'
-        }`}
+        className={`absolute top-[0.15rem] h-5 w-5 rounded-full border-2 border-black/30
+          bg-chalk transition-all ${checked ? 'left-[1.8rem]' : 'left-[0.15rem]'}`}
       />
     </button>
   );
@@ -43,9 +43,9 @@ function Field({
   onChange: (v: any) => void;
 }) {
   return (
-    <div className="flex items-start gap-4 border-b border-edge/50 py-3.5 last:border-0">
+    <div className="flex items-start gap-4 border-b-2 border-edge/40 py-3.5 last:border-0">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-chalk">{field.label}</p>
+        <p className="text-sm font-bold text-chalk">{field.label}</p>
         {field.help && <p className="mt-0.5 text-xs leading-relaxed text-mute">{field.help}</p>}
       </div>
 
@@ -54,17 +54,21 @@ function Field({
       {field.type === 'number' && (
         <div className="flex shrink-0 items-center gap-1.5">
           <button
-            className="h-8 w-8 rounded-lg border border-edge text-mute active:scale-90"
+            className="h-9 w-9 rounded-xl border-2 border-edge bg-slatey/70 text-lg font-black
+                       text-chalk shadow-pop-sm transition-all duration-100
+                       active:translate-y-[3px] active:shadow-none"
             onClick={() => onChange(Math.max(field.min, (value ?? 0) - (field.step ?? 1)))}
           >
             −
           </button>
-          <span className="w-14 text-center text-sm font-semibold tabular-nums text-chalk">
+          <span className="w-14 text-center text-sm font-extrabold tabular-nums text-chalk">
             {value ?? 0}
             {field.unit ?? ''}
           </span>
           <button
-            className="h-8 w-8 rounded-lg border border-edge text-mute active:scale-90"
+            className="h-9 w-9 rounded-xl border-2 border-edge bg-slatey/70 text-lg font-black
+                       text-chalk shadow-pop-sm transition-all duration-100
+                       active:translate-y-[3px] active:shadow-none"
             onClick={() => onChange(Math.min(field.max, (value ?? 0) + (field.step ?? 1)))}
           >
             +
@@ -74,7 +78,7 @@ function Field({
 
       {field.type === 'select' && (
         <select
-          className="shrink-0 rounded-xl border border-edge bg-ink px-2.5 py-2 text-sm text-chalk"
+          className="shrink-0 rounded-xl border-2 border-edge bg-ink px-2.5 py-2 text-sm font-bold text-chalk"
           value={value ?? field.options[0].value}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -134,8 +138,11 @@ export function SettingsScreen() {
       />
 
       {GAMES.map((g) => (
-        <section key={g.id} className="card mb-4">
-          <p className="label">{g.name}</p>
+        <section key={g.id} data-game={g.id} className="card-accent mb-4">
+          <p className="label mb-3 flex items-center gap-2 text-accent">
+            <GameCharacter game={g.id} size={22} />
+            {g.name}
+          </p>
           {g.settingsSchema.map((field) => (
             <Field
               key={field.key}
@@ -156,7 +163,7 @@ export function SettingsScreen() {
         <p className="label">This device</p>
         <div className="flex items-start gap-4 py-1">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-chalk">Play narration here</p>
+            <p className="text-sm font-bold text-chalk">Play narration here</p>
             <p className="mt-0.5 text-xs leading-relaxed text-mute">
               Night Village reads the night out loud. Exactly one phone should do it —
               by default, the host’s.

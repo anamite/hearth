@@ -23,10 +23,15 @@ function arcPath(from: number, to: number, radius: number): string {
 
 /** Scoring bands drawn around the target (§13.1). */
 const BANDS = [
-  { half: 15, fill: '#4CA64C', opacity: 0.16 },
-  { half: 8, fill: '#4CA64C', opacity: 0.24 },
-  { half: 3, fill: '#4CA64C', opacity: 0.5 },
+  { half: 15, fill: '#3DDC84', opacity: 0.18 },
+  { half: 8, fill: '#3DDC84', opacity: 0.3 },
+  { half: 3, fill: '#3DDC84', opacity: 0.62 },
 ];
+
+const ACCENT = 'rgb(var(--accent-rgb))';
+
+/** Evenly spaced notches around the arc, purely to make it read as a dial. */
+const TICKS = Array.from({ length: 21 }, (_, i) => i * 5);
 
 export function Spectrum({
   left,
@@ -114,14 +119,41 @@ export function Spectrum({
           onChange?.(pos);
         }}
       >
-        {/* Track */}
+        {/* Track — a dark well with a lighter lip, so it reads as a groove. */}
         <path
           d={arcPath(0, 100, ARC_R)}
           fill="none"
-          stroke="#33313F"
-          strokeWidth="22"
+          stroke="#38334F"
+          strokeWidth="26"
           strokeLinecap="round"
         />
+        <path
+          d={arcPath(0, 100, ARC_R)}
+          fill="none"
+          stroke="#0B0A10"
+          strokeWidth="20"
+          strokeLinecap="round"
+          opacity="0.55"
+        />
+
+        {/* Notches */}
+        {TICKS.map((t) => {
+          const a = pointAt(t, ARC_R - 9);
+          const b = pointAt(t, ARC_R + (t % 25 === 0 ? 10 : 6));
+          return (
+            <line
+              key={t}
+              x1={a.x}
+              y1={a.y}
+              x2={b.x}
+              y2={b.y}
+              stroke="#F4F1FA"
+              strokeWidth={t % 25 === 0 ? 2 : 1.1}
+              strokeLinecap="round"
+              opacity={t % 25 === 0 ? 0.4 : 0.16}
+            />
+          );
+        })}
 
         {/* Target bands — only ever rendered when the caller has the target. */}
         {showTarget && typeof target === 'number' &&
@@ -136,7 +168,7 @@ export function Spectrum({
               fill="none"
               stroke={b.fill}
               strokeOpacity={b.opacity}
-              strokeWidth="22"
+              strokeWidth="20"
               strokeLinecap="butt"
             />
           ))}
@@ -146,8 +178,8 @@ export function Spectrum({
             y1={pointAt(target, ARC_R - 12).y}
             x2={pointAt(target, ARC_R + 12).x}
             y2={pointAt(target, ARC_R + 12).y}
-            stroke="#4CA64C"
-            strokeWidth="2.5"
+            stroke="#3DDC84"
+            strokeWidth="3"
             strokeLinecap="round"
           />
         )}
@@ -158,19 +190,31 @@ export function Spectrum({
           y1={needleInner.y}
           x2={needle.x}
           y2={needle.y}
-          stroke="#E8743B"
+          stroke="#0B0A10"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+        <line
+          x1={needleInner.x}
+          y1={needleInner.y}
+          x2={needle.x}
+          y2={needle.y}
+          stroke={ACCENT}
           strokeWidth="4"
           strokeLinecap="round"
         />
-        <circle cx={CX} cy={CY} r="7" fill="#E8743B" />
-        {draggable && <circle cx={needle.x} cy={needle.y} r="11" fill="#E8743B" opacity="0.28" />}
+        <circle cx={CX} cy={CY} r="9" fill={ACCENT} stroke="#0B0A10" strokeWidth="2.5" />
+        <circle cx={needle.x} cy={needle.y} r="7" fill={ACCENT} stroke="#0B0A10" strokeWidth="2.5" />
+        {draggable && <circle cx={needle.x} cy={needle.y} r="15" fill={ACCENT} opacity="0.25" />}
       </svg>
 
-      <div className="mt-1 flex items-start justify-between gap-3 px-1">
-        <span className="max-w-[45%] text-left text-sm font-semibold leading-tight text-mute">
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <span className="max-w-[46%] rounded-xl border-2 border-edge/80 bg-slatey/60 px-2.5 py-1.5
+                         text-left text-[0.78rem] font-bold leading-tight text-chalk/80">
           {left}
         </span>
-        <span className="max-w-[45%] text-right text-sm font-semibold leading-tight text-mute">
+        <span className="max-w-[46%] rounded-xl border-2 border-edge/80 bg-slatey/60 px-2.5 py-1.5
+                         text-right text-[0.78rem] font-bold leading-tight text-chalk/80">
           {right}
         </span>
       </div>

@@ -3,19 +3,21 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { PhaseProps } from '../types';
 import { Countdown } from '@/components/Countdown';
 import { AvatarBadge } from '@/components/Avatar';
-import { ErrorNote, Spacer } from '@/components/ui';
+import { ErrorNote, HeroPanel, Spacer, Sticker } from '@/components/ui';
+import { GameCharacter } from '@/components/art';
 import { Spectrum } from './Spectrum';
 
 function header(view: PhaseProps['view']) {
   const pub = view.public as any;
   return (
-    <div className="mb-3 flex items-center justify-between">
+    <div className="mb-3 flex items-center justify-between gap-3">
       <div>
-        <p className="label mb-0.5">
+        <p className="label mb-0.5 text-accent">
           Round {pub.round_index + 1} of {pub.total_rounds}
         </p>
-        <p className="text-sm text-mute">
-          {pub.total_score} {pub.total_score === 1 ? 'point' : 'points'} so far
+        <p className="text-sm font-bold text-mute">
+          <span className="text-chalk">{pub.total_score}</span>{' '}
+          {pub.total_score === 1 ? 'point' : 'points'} so far
         </p>
       </div>
       <Countdown />
@@ -78,8 +80,19 @@ export function ClueScreen({ view, submit, busy, error }: PhaseProps) {
       ) : (
         <>
           <div className="mt-8 flex flex-col items-center gap-4 text-center">
-            <AvatarBadge avatarKey={giver?.avatar_key ?? 'fox'} size={72} ring="#E8743B" />
-            <p className="font-display text-2xl text-chalk">
+            <div className="relative">
+              <AvatarBadge
+                avatarKey={giver?.avatar_key ?? 'fox'}
+                size={78}
+                ring="rgb(var(--accent-rgb))"
+              />
+              <GameCharacter
+                game="dial"
+                size={30}
+                className="absolute -right-4 -top-3 animate-float"
+              />
+            </div>
+            <p className="font-display text-2xl font-extrabold text-chalk">
               {giver?.nickname} is thinking of a clue…
             </p>
             <p className="subtitle">Only they can see the target.</p>
@@ -105,11 +118,14 @@ export function GuessScreen({ view, submit, busy }: PhaseProps) {
     <div className="flex flex-1 flex-col">
       {header(view)}
 
-      <div className="rounded-3xl border border-ember/30 bg-ember/5 p-5 text-center">
-        <p className="label mb-1">The clue</p>
-        <p className="font-display text-3xl leading-tight text-chalk">
-          {pub.clue ? `“${pub.clue}”` : '(no clue given)'}
-        </p>
+      <div className="relative overflow-hidden rounded-[1.6rem] border-2 border-accent/45 bg-accent/8 p-5 text-center shadow-pop">
+        <div className="stripes pointer-events-none absolute inset-0 opacity-40" />
+        <div className="relative">
+          <p className="label mb-1 text-accent">The clue</p>
+          <p className="font-display text-[1.9rem] font-extrabold leading-tight text-chalk">
+            {pub.clue ? `“${pub.clue}”` : '(no clue given)'}
+          </p>
+        </div>
       </div>
 
       <div className="card mt-4">
@@ -144,7 +160,7 @@ export function GuessScreen({ view, submit, busy }: PhaseProps) {
           Lock it in
         </button>
       ) : (
-        <div className="rounded-2xl border border-edge bg-ash/50 p-4 text-center text-sm text-mute">
+        <div className="rounded-[1.4rem] border-2 border-edge bg-slatey/60 p-4 text-center text-sm font-bold text-mute">
           {holder?.nickname} locks in the final answer.
         </div>
       )}
@@ -178,7 +194,7 @@ export function RevealScreen({ view }: PhaseProps) {
       <div className="mt-6 text-center">
         <p className="label">{giver?.nickname} said “{pub.clue}”</p>
         <p
-          className={`mt-2 font-display text-6xl ${
+          className={`numeral mt-2 animate-pop-in text-[4.4rem] leading-none ${
             points > 0 ? 'text-moss' : 'text-mute'
           }`}
         >
@@ -190,8 +206,9 @@ export function RevealScreen({ view }: PhaseProps) {
       </div>
 
       <Spacer />
-      <p className="text-center text-sm text-mute">
-        Running total: <span className="text-chalk">{pub.total_score}</span>
+
+      <p className="text-center text-sm font-bold text-mute">
+        Running total: <span className="text-accent">{pub.total_score}</span>
       </p>
     </div>
   );
@@ -209,7 +226,8 @@ export function ResultScreen({ view }: PhaseProps) {
   if (result.aborted) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-        <p className="font-display text-3xl text-chalk">Round abandoned</p>
+        <GameCharacter game="dial" size={64} className="opacity-50" />
+        <p className="font-display text-3xl font-extrabold text-chalk">Round abandoned</p>
         <p className="subtitle">Too few players left to continue.</p>
         <button className="btn-primary mt-4" onClick={() => navigate(`/g/${code}`)}>
           Back to the lobby
@@ -225,14 +243,17 @@ export function ResultScreen({ view }: PhaseProps) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="rounded-3xl border border-moss/40 bg-moss/10 p-6 text-center">
-        <p className="label mb-1">Final score</p>
-        <p className="font-display text-6xl text-chalk">
+      <HeroPanel className="animate-pop-in" tone="moss" kicker="Final score">
+        <p className="numeral text-[4rem] leading-none text-chalk">
           {result.total_score}
           <span className="text-2xl text-mute"> / {result.max_possible}</span>
         </p>
-        <p className="subtitle mt-2">{pct}% of a perfect run.</p>
-      </div>
+        <div className="mt-3 flex justify-center">
+          <Sticker tone={pct >= 60 ? 'moss' : 'gold'} tilt={-2}>
+            {pct}% of a perfect run
+          </Sticker>
+        </div>
+      </HeroPanel>
 
       <div className="card mt-4">
         <p className="label">Round by round</p>
@@ -243,7 +264,7 @@ export function ResultScreen({ view }: PhaseProps) {
               <div key={i} className="flex items-start gap-3">
                 <AvatarBadge avatarKey={giver?.avatar_key ?? 'fox'} size={32} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-chalk">
+                  <p className="truncate text-sm font-bold text-chalk">
                     “{r.clue || '—'}”
                   </p>
                   <p className="text-xs text-mute">
@@ -251,9 +272,7 @@ export function ResultScreen({ view }: PhaseProps) {
                   </p>
                 </div>
                 <span
-                  className={`text-lg font-bold tabular-nums ${
-                    r.points > 0 ? 'text-moss' : 'text-mute'
-                  }`}
+                  className={`numeral text-lg ${r.points > 0 ? 'text-moss' : 'text-mute'}`}
                 >
                   {r.points}
                 </span>

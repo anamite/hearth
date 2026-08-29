@@ -1,54 +1,69 @@
 import { Link } from 'react-router-dom';
-import { Screen, Spacer } from '@/components/ui';
+import { Screen, Spacer, Sticker } from '@/components/ui';
+import { Blob, GameCharacter, HearthMark, Squiggle } from '@/components/art';
 import { GAMES } from '@/games/manifest';
+import { gameTheme } from '@/lib/theme';
 import { IS_MOCK } from '@/backend';
-
-function Flame() {
-  return (
-    <svg width="52" height="52" viewBox="0 0 48 48" fill="none" aria-hidden>
-      <path
-        d="M24 4c1.5 7-4 9.5-7.5 14C13 22.5 12 26 12 29a12 12 0 0 0 24 0c0-4-1.5-7-4-10.5-.8 2.5-2.2 3.8-3.6 4.2 1.1-5.6-.6-13-4.4-18.7Z"
-        fill="#E8743B"
-      />
-      <path
-        d="M24 20c1 3.5-1.5 5-3 7.5-1 1.6-1.5 3-1.5 4.5a4.5 4.5 0 0 0 9 0c0-2-1-4-2.5-6-.4 1.2-1 1.8-1.7 2 .5-2.6-.3-5.6-1.3-8Z"
-        fill="#F5D08A"
-      />
-    </svg>
-  );
-}
 
 export function LandingScreen() {
   return (
-    <Screen>
-      <div className="flex flex-1 flex-col justify-center py-10">
-        <Flame />
-        <h1 className="title mt-5 text-[2.8rem]">Hearth</h1>
-        <p className="subtitle mt-3 max-w-[19rem] text-base">
+    <Screen className="overflow-hidden">
+      {/* Background shapes. Decorative only. */}
+      <Blob className="pointer-events-none absolute -left-24 -top-16 h-64 w-64 animate-float-slow blur-2xl" opacity={0.22} />
+      <Blob className="pointer-events-none absolute -right-28 top-40 h-56 w-56 animate-float blur-2xl" opacity={0.14} />
+
+      <div className="relative flex flex-1 flex-col justify-center py-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-14 w-14 rotate-[-6deg] items-center justify-center rounded-2xl border-2 border-black/40 bg-slatey shadow-pop">
+            <HearthMark size={30} />
+          </span>
+          <Sticker tone="accent2" tilt={3}>Same room · no accounts</Sticker>
+        </div>
+
+        <h1 className="title mt-6 text-[3.4rem] leading-[0.9]">
+          Hearth
+        </h1>
+        <Squiggle className="-mt-1 h-3 w-32" />
+
+        <p className="subtitle mt-4 max-w-[20rem] text-[0.95rem]">
           Party games for people already in the same room. Your phone holds the
           secrets. Everything else happens out loud.
         </p>
 
-        <div className="mt-9 space-y-2.5">
-          {GAMES.map((g) => (
-            <div key={g.id} className="flex items-baseline gap-3">
-              <span className="w-1.5 shrink-0 self-center">
-                <span className="block h-1.5 w-1.5 rounded-full bg-ember/70" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-chalk">{g.name}</p>
-                <p className="text-xs text-mute">
-                  {g.minPlayers}–{g.maxPlayers} players · {g.estimatedMinutes} min
-                </p>
+        <div className="mt-8 space-y-3">
+          {GAMES.map((g, i) => {
+            const t = gameTheme(g.id);
+            return (
+              <div
+                key={g.id}
+                data-game={g.id}
+                className="animate-rise relative flex items-center gap-3.5 overflow-hidden rounded-[1.4rem]
+                           border-2 border-edge/80 bg-ash/70 p-3.5"
+                style={{ animationDelay: `${i * 70}ms` }}
+              >
+                <span
+                  className="pointer-events-none absolute inset-y-0 left-0 w-1.5"
+                  style={{ background: t.accent }}
+                />
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center">
+                  <GameCharacter game={g.id} size={44} className="animate-float" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-[1.05rem] font-extrabold text-chalk">{g.name}</p>
+                  <p className="truncate text-xs text-mute">
+                    {g.minPlayers}–{g.maxPlayers} players · {g.estimatedMinutes} min
+                  </p>
+                </div>
+                <span className="pill-accent shrink-0">{t.flavour}</span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <Spacer />
 
-      <div className="space-y-2.5">
+      <div className="relative space-y-2.5">
         <Link to="/create" className="btn-primary">
           Start a group
         </Link>
@@ -57,12 +72,12 @@ export function LandingScreen() {
         </Link>
       </div>
 
-      <p className="mt-5 text-center text-xs leading-relaxed text-mute/70">
+      <p className="relative mt-5 text-center text-xs leading-relaxed text-mute/70">
         No accounts. No email. No app store.
         {IS_MOCK && (
           <>
             <br />
-            <span className="text-ember/80">
+            <span className="font-semibold text-accent/90">
               Local mode — open a new tab to add another player.
             </span>
           </>

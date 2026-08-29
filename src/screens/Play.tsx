@@ -8,6 +8,7 @@ import { gameModule } from '@/games/manifest';
 import { POLL_INTERVAL_MS } from '@/lib/constants';
 import { useInterval, usePageVisible, useWakeLock } from '@/lib/hooks';
 import { Loading, ReconnectBanner, Screen, Spacer, TopBar } from '@/components/ui';
+import { GameCharacter } from '@/components/art';
 import type { PhaseProps } from '@/games/types';
 
 const ACTION_MESSAGES: Record<string, string> = {
@@ -128,7 +129,7 @@ export function PlayScreen() {
 
   if (!game || !Phase || !me) {
     return (
-      <Screen>
+      <Screen game={view.game_type}>
         <ReconnectBanner show={status === 'reconnecting'} />
         <TopBar title={game?.name ?? view.game_type} subtitle={`Phase: ${view.phase}`} />
         <p className="subtitle">
@@ -145,18 +146,27 @@ export function PlayScreen() {
   const props: PhaseProps = { view, me, submit: doSubmit, busy, error };
 
   return (
-    <Screen>
+    <Screen game={view.game_type}>
       <ReconnectBanner show={status === 'reconnecting'} />
-      <div className="mb-4 flex items-center justify-between">
-        <span className="pill">{game.name}</span>
-        {view.day_number > 0 && <span className="pill">Day {view.day_number}</span>}
+
+      {/* Every game keeps its own colour and mascot in the corner. */}
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 rounded-full border-2 border-accent/45 bg-accent/12 py-1 pl-1 pr-3">
+          <GameCharacter game={view.game_type} size={24} />
+          <span className="text-[0.72rem] font-extrabold uppercase tracking-wider text-accent">
+            {game.name}
+          </span>
+        </span>
+        {view.day_number > 0 && (
+          <span className="pill">Day {view.day_number}</span>
+        )}
       </div>
 
       {/* The router knows nothing about any specific game (§15.3). */}
       <Phase {...props} />
 
       {error && (
-        <p role="alert" className="mt-3 text-center text-sm text-blood">
+        <p role="alert" className="mt-3 animate-jiggle text-center text-sm font-bold text-blood">
           {error}
         </p>
       )}

@@ -2,15 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------
+   Per-game accent. Every screen sits inside something carrying a
+   `data-game` attribute (see <GameTheme>), so a single pair of RGB
+   variables re-skins buttons, rings, glows and highlights at once.
+   Values are RGB triplets so Tailwind's `/40` opacity still works.
+   --------------------------------------------------------------- */
+:root {
+  --accent-rgb: 255 122 41;   /* ember  — the app's own colour */
+  --accent2-rgb: 255 197 61;  /* gold   */
+}
+[data-game='fake_artist'] {
+  --accent-rgb: 255 61 139;   /* punch  */
+  --accent2-rgb: 34 211 238;  /* lagoon */
+}
+[data-game='night_village'] {
+  --accent-rgb: 167 139 250;  /* grape  */
+  --accent2-rgb: 255 77 94;   /* blood  */
+}
+[data-game='dial'] {
+  --accent-rgb: 34 211 238;   /* lagoon */
+  --accent2-rgb: 255 197 61;  /* gold   */
+}
+
 @layer base {
   html, body, #root {
     height: 100%;
   }
   body {
-    /* A warm ember glow behind everything — the "hearth". */
-    background:
-      radial-gradient(120% 80% at 50% -10%, #241a1d 0%, transparent 60%),
-      #0E0D12;
+    /* Two soft accent washes and a dot grid — the "arcade at night" ground. */
+    background-color: #0B0A10;
+    background-image:
+      radial-gradient(90% 55% at 12% -8%, rgb(var(--accent-rgb) / 0.20) 0%, transparent 62%),
+      radial-gradient(80% 50% at 92% 6%, rgb(var(--accent2-rgb) / 0.13) 0%, transparent 60%),
+      radial-gradient(circle at center, rgb(255 255 255 / 0.045) 1px, transparent 1.1px);
+    background-size: auto, auto, 22px 22px;
+    background-attachment: fixed;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
   }
@@ -20,44 +47,118 @@
     user-select: none;
     -webkit-touch-callout: none;
   }
+  ::selection {
+    background: rgb(var(--accent-rgb) / 0.35);
+  }
 }
 
 @layer components {
   .screen {
-    @apply mx-auto flex min-h-full w-full max-w-md flex-col px-5 pb-6;
+    @apply relative mx-auto flex min-h-full w-full max-w-md flex-col px-5 pb-6;
     padding-top: max(1.25rem, env(safe-area-inset-top));
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
 
+  /* --- Buttons: chunky, with a hard drop that squashes on press ---- */
   .btn {
-    @apply inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl
-           px-5 text-base font-semibold transition
-           active:scale-[0.985] disabled:pointer-events-none disabled:opacity-40;
+    @apply inline-flex min-h-[3.4rem] w-full items-center justify-center gap-2 rounded-2xl
+           border-2 px-5 text-[0.98rem] font-extrabold tracking-wide
+           transition-all duration-100 active:translate-y-[3px]
+           disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none
+           disabled:translate-y-0;
   }
-  .btn-primary { @apply btn bg-ember text-ink shadow-lg shadow-ember/20; }
-  .btn-ghost   { @apply btn border border-edge bg-ash/60 text-chalk; }
-  .btn-quiet   { @apply btn bg-transparent text-mute; }
-  .btn-danger  { @apply btn border border-blood/40 bg-blood/10 text-blood; }
+  .btn-primary {
+    @apply btn border-black/40 bg-accent text-ink shadow-pop
+           active:shadow-pop-sm;
+  }
+  .btn-ghost {
+    @apply btn border-edge bg-slatey/80 text-chalk shadow-pop-sm
+           active:shadow-none;
+  }
+  .btn-quiet {
+    @apply btn min-h-[2.9rem] border-transparent bg-transparent text-mute
+           active:translate-y-0 active:text-chalk;
+  }
+  .btn-danger {
+    @apply btn border-blood/60 bg-blood/15 text-blood shadow-pop-sm active:shadow-none;
+  }
 
+  /* --- Surfaces ---------------------------------------------------- */
   .card {
-    @apply rounded-3xl border border-edge/70 bg-ash/70 p-5 backdrop-blur;
+    @apply relative rounded-[1.6rem] border-2 border-edge/80 bg-ash/80 p-5 backdrop-blur-sm;
+    box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  }
+  /* A card that belongs to the current game: tinted edge + faint glow. */
+  .card-accent {
+    @apply card border-accent/45;
+    background-image: linear-gradient(160deg, rgb(var(--accent-rgb) / 0.12), transparent 62%);
   }
 
   .field {
-    @apply w-full rounded-2xl border border-edge bg-ink/60 px-4 py-3.5 text-base text-chalk
-           placeholder:text-mute/60 focus:border-ember focus:outline-none;
+    @apply w-full rounded-2xl border-2 border-edge bg-ink/70 px-4 py-3.5 text-base font-semibold
+           text-chalk transition placeholder:font-normal placeholder:text-mute/50
+           focus:border-accent focus:outline-none;
+  }
+  .field:focus {
+    box-shadow: 0 0 0 4px rgb(var(--accent-rgb) / 0.18);
   }
 
-  .label { @apply mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-mute; }
+  .label {
+    @apply mb-2 block text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-mute;
+  }
 
   .pill {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-edge/80 bg-ash/70
-           px-2.5 py-1 text-xs font-medium text-mute;
+    @apply inline-flex items-center gap-1.5 rounded-full border-2 border-edge/90 bg-slatey/80
+           px-3 py-1 text-[0.72rem] font-bold text-mute;
+  }
+  .pill-accent {
+    @apply pill border-accent/50 bg-accent/15 text-accent;
   }
 
-  .title { @apply font-display text-[2rem] leading-[1.1] tracking-tight text-chalk; }
+  /* A small tilted badge — used for scores, roles, counters. */
+  .sticker {
+    @apply inline-flex items-center gap-1.5 rounded-xl border-2 border-black/40 px-2.5 py-1
+           text-[0.72rem] font-extrabold uppercase tracking-wider shadow-pop-sm;
+  }
+
+  .title {
+    @apply font-display text-[2.1rem] font-extrabold leading-[1.02] tracking-[-0.02em] text-chalk;
+  }
   .subtitle { @apply text-sm leading-relaxed text-mute; }
+
+  /* Big display numbers — timers, scores, counts. */
+  .numeral {
+    @apply font-display font-extrabold tabular-nums tracking-[-0.03em];
+  }
 }
 
-/* The dial and the drawing canvas must not scroll the page under a drag. */
-.touch-none-safe { touch-action: none; }
+@layer utilities {
+  /* The dial and the drawing canvas must not scroll the page under a drag. */
+  .touch-none-safe { touch-action: none; }
+
+  .text-accent-glow {
+    text-shadow: 0 0 26px rgb(var(--accent-rgb) / 0.55);
+  }
+
+  /* Diagonal candy stripes — headers and empty states. */
+  .stripes {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(var(--accent-rgb) / 0.16) 0 8px,
+      transparent 8px 18px
+    );
+  }
+
+  /* Faint dot screen, for panels that want a printed feel. */
+  .dots {
+    background-image: radial-gradient(circle at center, rgb(255 255 255 / 0.07) 1px, transparent 1.1px);
+    background-size: 14px 14px;
+  }
+
+  .tilt-l { transform: rotate(-2deg); }
+  .tilt-r { transform: rotate(2deg); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe-only { animation: none !important; }
+  }
+}

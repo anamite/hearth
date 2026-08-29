@@ -6,6 +6,8 @@ import { useLobby } from '@/lib/useLobby';
 import { GAMES, gameModule } from '@/games/manifest';
 import { AvatarBadge } from '@/components/Avatar';
 import { Loading, Screen, TopBar } from '@/components/ui';
+import { GameCharacter } from '@/components/art';
+import { gameTheme } from '@/lib/theme';
 
 function when(iso: string): string {
   const d = new Date(iso);
@@ -59,10 +61,10 @@ function StatsTable({ gameType, rows }: { gameType: GameType; rows: PlayerStats[
     <div className="-mx-1 overflow-x-auto">
       <table className="w-full min-w-[19rem] border-collapse text-sm">
         <thead>
-          <tr className="text-left text-[0.65rem] uppercase tracking-wider text-mute">
-            <th className="pb-2 pl-1 font-semibold">Player</th>
+          <tr className="text-left text-[0.62rem] uppercase tracking-[0.14em] text-mute">
+            <th className="pb-2 pl-1 font-extrabold">Player</th>
             {columns.map((c) => (
-              <th key={c.head} className="pb-2 text-right font-semibold">
+              <th key={c.head} className="pb-2 text-right font-extrabold">
                 {c.head}
               </th>
             ))}
@@ -70,18 +72,18 @@ function StatsTable({ gameType, rows }: { gameType: GameType; rows: PlayerStats[
         </thead>
         <tbody>
           {sorted.map((r) => (
-            <tr key={r.player_id} className="border-t border-edge/50">
-              <td className="py-2 pl-1">
+            <tr key={r.player_id} className="border-t-2 border-edge/40">
+              <td className="py-2.5 pl-1">
                 <span className="flex items-center gap-2">
-                  <AvatarBadge avatarKey={r.avatar_key} size={26} />
-                  <span className="text-chalk">{r.nickname}</span>
+                  <AvatarBadge avatarKey={r.avatar_key} size={28} />
+                  <span className="font-bold text-chalk">{r.nickname}</span>
                 </span>
               </td>
               {columns.map((c) => (
                 <td
                   key={c.head}
-                  className={`py-2 text-right tabular-nums ${
-                    c.emphasise ? 'font-bold text-ember' : 'text-mute'
+                  className={`py-2.5 text-right font-bold tabular-nums ${
+                    c.emphasise ? 'text-accent' : 'text-mute'
                   }`}
                 >
                   {c.get(r)}
@@ -120,16 +122,24 @@ export function HistoryScreen() {
 
   return (
     <Screen>
-      <TopBar title="History" subtitle={lobby.group.display_name} onBack="history" />
+      <TopBar
+        eyebrow="Scoreboard"
+        title="History"
+        subtitle={lobby.group.display_name}
+        onBack="history"
+      />
 
-      <div className="mb-5 flex gap-1 rounded-2xl border border-edge bg-ash/50 p-1">
+      <div className="mb-5 flex gap-1.5 rounded-2xl border-2 border-edge bg-ash/60 p-1.5">
         {(['games', 'stats'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 rounded-xl py-2 text-sm font-semibold capitalize transition ${
-              tab === t ? 'bg-ember text-ink' : 'text-mute'
-            }`}
+            className={`flex-1 rounded-xl py-2 text-sm font-extrabold uppercase tracking-wider
+              transition-all duration-100 ${
+                tab === t
+                  ? 'bg-accent text-ink shadow-pop-sm'
+                  : 'text-mute active:translate-y-[2px]'
+              }`}
           >
             {t}
           </button>
@@ -146,15 +156,25 @@ export function HistoryScreen() {
               return (
                 <li
                   key={h.id}
-                  className="flex items-baseline justify-between gap-3 rounded-2xl border border-edge/70 bg-ash/50 px-4 py-3"
+                  data-game={h.game_type}
+                  className="flex items-center gap-3 overflow-hidden rounded-[1.2rem] border-2
+                             border-edge/70 bg-ash/60 px-3 py-2.5"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-chalk">{g?.name ?? h.game_type}</p>
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                    style={{ background: `${gameTheme(h.game_type).accent}22` }}
+                  >
+                    <GameCharacter game={h.game_type} size={26} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-chalk">{g?.name ?? h.game_type}</p>
                     <p className="truncate text-xs text-mute">
                       {g?.summarise(h.result) ?? ''}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs text-mute">{when(h.ended_at)}</span>
+                  <span className="shrink-0 text-[0.7rem] font-bold text-mute">
+                    {when(h.ended_at)}
+                  </span>
                 </li>
               );
             })}
@@ -168,8 +188,11 @@ export function HistoryScreen() {
             const rows = stats.filter((s) => s.game_type === g.id);
             if (rows.length === 0) return null;
             return (
-              <section key={g.id} className="card">
-                <p className="label">{g.name}</p>
+              <section key={g.id} data-game={g.id} className="card-accent">
+                <p className="label mb-3 flex items-center gap-2 text-accent">
+                  <GameCharacter game={g.id} size={22} />
+                  {g.name}
+                </p>
                 <StatsTable gameType={g.id} rows={rows} />
               </section>
             );

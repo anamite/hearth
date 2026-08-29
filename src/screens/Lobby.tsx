@@ -5,8 +5,12 @@ import { HearthError } from '@/types';
 import { getBackend } from '@/backend';
 import { useLobby } from '@/lib/useLobby';
 import { GAMES } from '@/games/manifest';
+import { gameTheme } from '@/lib/theme';
+import { GameCharacter } from '@/components/art';
 import { AvatarBadge } from '@/components/Avatar';
-import { CodeDisplay, ErrorNote, Loading, Screen, Spacer, TopBar } from '@/components/ui';
+import {
+  CodeDisplay, ErrorNote, Loading, Screen, Spacer, Sticker, TopBar,
+} from '@/components/ui';
 
 export function LobbyScreen() {
   const { code = '' } = useParams();
@@ -73,12 +77,15 @@ export function LobbyScreen() {
   return (
     <Screen>
       <TopBar
+        eyebrow="Lobby"
         title={lobby.group.display_name}
         subtitle={`${present.length} ${present.length === 1 ? 'player' : 'players'} here`}
         right={
           <Link
             to={`/g/${code}/history`}
-            className="rounded-xl border border-edge px-3 py-2 text-xs font-semibold text-mute"
+            className="mt-1 shrink-0 rounded-2xl border-2 border-edge bg-slatey/70 px-3 py-2
+                       text-[0.7rem] font-extrabold uppercase tracking-wider text-mute
+                       shadow-pop-sm transition-all duration-100 active:translate-y-[3px] active:shadow-none"
           >
             History
           </Link>
@@ -86,27 +93,33 @@ export function LobbyScreen() {
       />
 
       <CodeDisplay code={lobby.group.code} onCopy={copyLink} />
-      <p className="mt-2 text-center text-xs text-mute">
-        {copied ? 'Link copied' : 'Tap to copy the join link · say the PIN out loud'}
+      <p className="mt-2.5 text-center text-xs font-semibold text-mute">
+        {copied ? '✓ Link copied' : 'Tap to copy the join link · say the PIN out loud'}
       </p>
 
       {/* Players */}
       <div className="mt-6 flex flex-wrap gap-2">
-        {present.map((p) => (
+        {present.map((p, i) => (
           <div
             key={p.player_id}
-            className={`flex items-center gap-2 rounded-2xl border py-1.5 pl-1.5 pr-3 ${
-              p.is_ready ? 'border-moss/40 bg-moss/5' : 'border-edge/70 bg-ash/50'
-            }`}
+            className={`flex animate-pop-in items-center gap-2 rounded-2xl border-2 py-1.5 pl-1.5 pr-3
+              shadow-pop-sm ${
+                p.is_ready ? 'border-moss/60 bg-moss/10' : 'border-edge/80 bg-slatey/60'
+              }`}
+            style={{ animationDelay: `${i * 45}ms` }}
           >
-            <AvatarBadge avatarKey={p.avatar_key} size={32} />
+            <AvatarBadge avatarKey={p.avatar_key} size={34} />
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-chalk">
+              <p className="text-sm font-bold text-chalk">
                 {p.nickname}
                 {p.player_id === me.player_id && <span className="text-mute"> · you</span>}
               </p>
-              <p className="text-[0.65rem] text-mute">
-                {p.is_host ? 'host' : p.is_ready ? 'ready' : 'not ready'}
+              <p
+                className={`text-[0.62rem] font-extrabold uppercase tracking-wider ${
+                  p.is_host ? 'text-gold' : p.is_ready ? 'text-moss' : 'text-mute'
+                }`}
+              >
+                {p.is_host ? '★ host' : p.is_ready ? 'ready' : 'not ready'}
               </p>
             </div>
           </div>
@@ -114,40 +127,58 @@ export function LobbyScreen() {
       </div>
 
       {/* Games */}
-      <p className="label mt-8">Pick a game</p>
-      <div className="space-y-2.5">
+      <div className="mt-8 flex items-center gap-2">
+        <p className="label mb-0">Pick a game</p>
+        <span className="h-0.5 flex-1 rounded-full bg-edge/70" />
+      </div>
+
+      <div className="mt-3 space-y-3">
         {GAMES.map((g) => {
           const tooFew = present.length < g.minPlayers;
           const tooMany = present.length > g.maxPlayers;
           const blocked = tooFew || tooMany;
+          const t = gameTheme(g.id);
           return (
             <button
               key={g.id}
+              data-game={g.id}
               disabled={blocked || !me.is_host || busy}
               onClick={() => start(g.id)}
-              className={`w-full rounded-2xl border p-4 text-left transition
-                ${blocked ? 'border-edge/50 bg-ash/30 opacity-50' : 'border-edge bg-ash/60 active:scale-[0.99]'}
+              className={`relative w-full overflow-hidden rounded-[1.5rem] border-2 p-4 pl-[4.6rem] text-left
+                transition-all duration-100
+                ${
+                  blocked
+                    ? 'border-edge/50 bg-ash/40 opacity-45'
+                    : 'border-accent/40 bg-ash/75 shadow-pop active:translate-y-[3px] active:shadow-pop-sm'
+                }
                 ${!me.is_host ? 'cursor-default' : ''}`}
             >
+              {/* Mascot sits in a tinted gutter down the left edge. */}
+              <span
+                className="pointer-events-none absolute inset-y-0 left-0 flex w-[3.9rem] items-center justify-center"
+                style={{ background: `linear-gradient(180deg, ${t.accent}26, ${t.accent}0d)` }}
+              >
+                <GameCharacter game={g.id} size={40} />
+              </span>
+
               <div className="flex items-baseline justify-between gap-3">
-                <span className="font-display text-xl text-chalk">{g.name}</span>
-                <span className="shrink-0 text-xs text-mute">
+                <span className="font-display text-[1.35rem] font-extrabold leading-tight text-chalk">
+                  {g.name}
+                </span>
+                <span className="shrink-0 text-[0.7rem] font-bold text-mute">
                   {g.minPlayers}–{g.maxPlayers} · {g.estimatedMinutes}m
                 </span>
               </div>
-              <p className="mt-1 text-sm text-mute">{g.tagline}</p>
-              {g.headline && !blocked && (
-                <p className="mt-1.5 text-xs font-semibold text-ember">{g.headline}</p>
-              )}
-              {tooFew && (
-                <p className="mt-1.5 text-xs text-blood">Needs {g.minPlayers}+</p>
-              )}
-              {tooMany && (
-                <p className="mt-1.5 text-xs text-blood">Too many — max {g.maxPlayers}</p>
-              )}
-              {!blocked && g.bestWith && present.length < g.bestWith && (
-                <p className="mt-1.5 text-xs text-mute">Best with {g.bestWith}+</p>
-              )}
+              <p className="mt-1 text-[0.82rem] leading-snug text-mute">{g.tagline}</p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {g.headline && !blocked && <span className="pill-accent">{g.headline}</span>}
+                {tooFew && <Sticker tone="blood" tilt={-1.5}>Needs {g.minPlayers}+</Sticker>}
+                {tooMany && <Sticker tone="blood" tilt={-1.5}>Max {g.maxPlayers}</Sticker>}
+                {!blocked && g.bestWith && present.length < g.bestWith && (
+                  <span className="pill">Best with {g.bestWith}+</span>
+                )}
+              </div>
             </button>
           );
         })}

@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { AvatarKey } from '@/types';
 import { HearthError } from '@/types';
 import { getBackend } from '@/backend';
-import { Screen, TopBar, Spacer, ErrorNote } from '@/components/ui';
+import { Screen, TopBar, Spacer, ErrorNote, Sticker } from '@/components/ui';
+import { HearthMark } from '@/components/art';
 import { AvatarPicker, NicknamePicker, TurnstileGate } from '@/components/IdentityPicker';
 import { AVATAR_KEYS, CODE_ALPHABET, CODE_LENGTH } from '@/lib/constants';
 
@@ -91,9 +92,15 @@ export function CreateScreen() {
   return (
     <Screen>
       <TopBar
+        eyebrow="New group"
         title="Start a group"
         subtitle="Pick a PIN and read it out. That’s the whole setup."
         onBack="history"
+        right={
+          <span className="mt-1 flex h-11 w-11 shrink-0 rotate-6 items-center justify-center rounded-2xl border-2 border-black/40 bg-slatey shadow-pop">
+            <HearthMark size={24} />
+          </span>
+        }
       />
 
       <div className="space-y-6">
@@ -190,7 +197,17 @@ export function JoinScreen() {
 
   return (
     <Screen>
-      <TopBar title="Join a group" subtitle="Ask for the code and the PIN." onBack="history" />
+      <TopBar
+        eyebrow="Join"
+        title="Join a group"
+        subtitle="Ask for the code and the PIN."
+        onBack="history"
+        right={
+          <span className="mt-1 flex h-11 w-11 shrink-0 -rotate-6 items-center justify-center rounded-2xl border-2 border-black/40 bg-slatey shadow-pop">
+            <HearthMark size={24} />
+          </span>
+        }
+      />
 
       <div className="space-y-6">
         <div>
@@ -214,11 +231,13 @@ export function JoinScreen() {
             }}
           />
           {codeReady && (
-            <p className={`mt-2 text-xs ${peek ? 'text-moss' : 'text-blood'}`}>
-              {peek
-                ? `${peek.display_name} · ${peek.player_count} here`
-                : 'No group with that code'}
-            </p>
+            <div className="mt-2.5 animate-pop-in">
+              <Sticker tone={peek ? 'moss' : 'blood'} tilt={-1.5}>
+                {peek
+                  ? `${peek.display_name} · ${peek.player_count} here`
+                  : 'No group with that code'}
+              </Sticker>
+            </div>
           )}
         </div>
 

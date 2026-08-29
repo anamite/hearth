@@ -1,5 +1,6 @@
 import type { Backend } from './types';
 import { MockBackend } from './mock';
+import { SUPABASE_KEY, SUPABASE_URL } from './env';
 
 /**
  * Backend selection. Defaults to the local mock so the app is fully
@@ -7,9 +8,7 @@ import { MockBackend } from './mock';
  * URL and anon key) to switch to the real one.
  */
 export const IS_MOCK = !(
-  import.meta.env.VITE_BACKEND === 'supabase' &&
-  !!import.meta.env.VITE_SUPABASE_URL &&
-  !!import.meta.env.VITE_SUPABASE_ANON_KEY
+  import.meta.env.VITE_BACKEND === 'supabase' && !!SUPABASE_URL && !!SUPABASE_KEY
 );
 
 let instance: Backend | null = null;

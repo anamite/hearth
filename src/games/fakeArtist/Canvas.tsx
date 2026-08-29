@@ -46,7 +46,7 @@ export function DrawingView({
   return (
     <svg
       viewBox={`0 0 ${VB_W} ${VB_H}`}
-      className={`w-full rounded-2xl border border-edge bg-[#F5F1E8] ${className}`}
+      className={`w-full rounded-[1.4rem] border-[3px] border-edge bg-[#F7F3EA] shadow-pop ${className}`}
       aria-label="The finished drawing"
     >
       <Strokes strokes={strokes} />
@@ -173,9 +173,8 @@ export function DrawingCanvas({
     <svg
       ref={svgRef}
       viewBox={`0 0 ${VB_W} ${VB_H}`}
-      className={`w-full touch-none-safe rounded-2xl border bg-[#F5F1E8] ${
-        myTurn ? 'border-ember' : 'border-edge'
-      }`}
+      className={`w-full touch-none-safe rounded-[1.4rem] border-[3px] bg-[#F7F3EA] shadow-pop
+        transition-colors ${myTurn ? 'border-accent' : 'border-edge'}`}
       onPointerDown={start}
       onPointerMove={move}
       onPointerUp={end}

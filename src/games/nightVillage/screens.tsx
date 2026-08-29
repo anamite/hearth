@@ -5,7 +5,8 @@ import { HoldToReveal } from '@/components/HoldToReveal';
 import { Countdown, PhaseProgress } from '@/components/Countdown';
 import { PlayerGrid } from '@/components/PlayerGrid';
 import { AvatarBadge } from '@/components/Avatar';
-import { Spacer } from '@/components/ui';
+import { HeroPanel, Spacer, Sticker } from '@/components/ui';
+import { GameCharacter, SleepingMoon } from '@/components/art';
 import { avatarColor } from '@/lib/constants';
 import { vibrate, useLocalStorage } from '@/lib/hooks';
 import { playSequence, preloadAll, unlock } from '@/lib/audio';
@@ -70,7 +71,7 @@ function NarrationText({ lines }: { lines: { text: string }[] }) {
   return (
     <div className="space-y-1.5 text-center">
       {lines.map((l, i) => (
-        <p key={i} className="font-display text-2xl leading-snug text-chalk animate-fade-up">
+        <p key={i} className="animate-fade-up font-display text-[1.65rem] font-extrabold leading-snug text-chalk">
           {l.text}
         </p>
       ))}
@@ -107,9 +108,14 @@ export function RevealScreen({ view, submit, busy }: PhaseProps) {
           vibrate();
         }}
       >
+        {copy.tone === 'danger' && (
+          <Sticker tone="blood" tilt={-3} className="mb-4">
+            Keep it shut
+          </Sticker>
+        )}
         <p
-          className={`font-display text-[2.3rem] leading-tight ${
-            copy.tone === 'danger' ? 'text-blood' : 'text-chalk'
+          className={`font-display text-[2.3rem] font-extrabold leading-[0.98] ${
+            copy.tone === 'danger' ? 'text-blood' : 'text-chalk text-accent-glow'
           }`}
         >
           {copy.title}
@@ -122,8 +128,8 @@ export function RevealScreen({ view, submit, busy }: PhaseProps) {
             <div className="flex justify-center gap-3">
               {fellowWolves.map((p) => (
                 <div key={p!.player_id} className="flex flex-col items-center gap-1">
-                  <AvatarBadge avatarKey={p!.avatar_key} size={44} ring="#C6413B" />
-                  <span className="text-xs text-chalk">{p!.nickname}</span>
+                  <AvatarBadge avatarKey={p!.avatar_key} size={46} ring="#FF4D5E" />
+                  <span className="text-xs font-bold text-chalk">{p!.nickname}</span>
                 </div>
               ))}
             </div>
@@ -134,8 +140,8 @@ export function RevealScreen({ view, submit, busy }: PhaseProps) {
         )}
       </HoldToReveal>
 
-      <p className="mt-4 text-center text-sm text-mute">
-        {readyCount} of {view.players.length} ready
+      <p className="mt-4 text-center text-sm font-bold text-mute">
+        <span className="text-chalk">{readyCount}</span> of {view.players.length} ready
       </p>
 
       <Spacer />
@@ -174,11 +180,9 @@ export function NightScreen({ view, submit, busy }: PhaseProps) {
   if (!acting) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <div className="h-2 w-2 rounded-full bg-mute/40" />
-        <p className="font-display text-3xl text-mute">The village sleeps</p>
-        {!alive && (
-          <p className="pill">You are out — watching only</p>
-        )}
+        <SleepingMoon size={104} className="animate-float-slow" />
+        <p className="font-display text-3xl font-extrabold text-chalk/80">The village sleeps</p>
+        {!alive && <span className="pill">You are out — watching only</span>}
         <p className="subtitle max-w-[16rem]">Put the phone face down on the table.</p>
       </div>
     );
@@ -230,8 +234,8 @@ export function NightScreen({ view, submit, busy }: PhaseProps) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-lg font-semibold text-chalk">{prompt}</p>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="font-display text-xl font-extrabold leading-tight text-chalk">{prompt}</p>
         <Countdown />
       </div>
       <PhaseProgress total={view.settings.night_village.night_action_seconds} />
@@ -249,15 +253,15 @@ export function NightScreen({ view, submit, busy }: PhaseProps) {
 
       {phase === 'night_seer' && iActed && latestCheck && (
         <div
-          className={`mt-5 rounded-2xl border p-4 text-center ${
-            latestCheck.is_wolf ? 'border-blood/40 bg-blood/10' : 'border-moss/40 bg-moss/10'
+          className={`mt-5 animate-pop-in rounded-[1.4rem] border-2 p-4 text-center ${
+            latestCheck.is_wolf ? 'border-blood/50 bg-blood/12' : 'border-moss/50 bg-moss/12'
           }`}
         >
           <p className="label mb-1">You looked at</p>
-          <p className="font-display text-2xl text-chalk">
+          <p className="font-display text-2xl font-extrabold text-chalk">
             {view.players.find((p) => p.player_id === latestCheck.target_id)?.nickname}
           </p>
-          <p className={`mt-1 text-lg font-semibold ${latestCheck.is_wolf ? 'text-blood' : 'text-moss'}`}>
+          <p className={`mt-1 text-lg font-extrabold ${latestCheck.is_wolf ? 'text-blood' : 'text-moss'}`}>
             {latestCheck.is_wolf ? 'They are a Wolf' : 'They are not a Wolf'}
           </p>
         </div>
@@ -300,14 +304,14 @@ export function MorningScreen({ view }: PhaseProps) {
       <NarrationText lines={lines} />
       {died ? (
         <div className="flex flex-col items-center gap-3">
-          <AvatarBadge avatarKey={died.avatar_key} size={80} dimmed />
-          <p className="font-display text-3xl text-chalk">{died.nickname}</p>
+          <AvatarBadge avatarKey={died.avatar_key} size={84} dimmed />
+          <p className="font-display text-3xl font-extrabold text-chalk">{died.nickname}</p>
           {summary?.died_role && (
-            <p className="pill">was a {roleWord(summary.died_role)}</p>
+            <Sticker tone="blood" tilt={-2}>was a {roleWord(summary.died_role)}</Sticker>
           )}
         </div>
       ) : (
-        <p className="pill">Everyone is still here</p>
+        <Sticker tone="moss" tilt={2}>Everyone is still here</Sticker>
       )}
       <Countdown size="sm" />
     </div>
@@ -339,10 +343,10 @@ export function EveningScreen({ view }: PhaseProps) {
 
       {out && (
         <div className="mb-5 flex flex-col items-center gap-2">
-          <AvatarBadge avatarKey={out.avatar_key} size={72} dimmed />
-          <p className="font-display text-2xl text-chalk">{out.nickname}</p>
+          <AvatarBadge avatarKey={out.avatar_key} size={76} dimmed />
+          <p className="font-display text-2xl font-extrabold text-chalk">{out.nickname}</p>
           {result?.eliminated_role && (
-            <p className="pill">was a {roleWord(result.eliminated_role)}</p>
+            <Sticker tone="blood" tilt={-2}>was a {roleWord(result.eliminated_role)}</Sticker>
           )}
         </div>
       )}
@@ -395,7 +399,7 @@ export function DayDiscussScreen({ view, submit, busy }: PhaseProps) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <p className="label text-center">Day {view.day_number} · talk it out</p>
+      <p className="label text-center text-accent">Day {view.day_number} · talk it out</p>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-4">
         <Countdown size="xl" warnAt={30} />
@@ -436,9 +440,10 @@ export function DayVoteScreen({ view, submit, busy }: PhaseProps) {
   if (!alive) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-        <p className="pill">You are out</p>
-        <p className="font-display text-2xl text-mute">The village is voting</p>
-        <p className="text-sm text-mute">
+        <SleepingMoon size={84} className="opacity-60" />
+        <Sticker tone="dark" tilt={-2}>You are out</Sticker>
+        <p className="font-display text-2xl font-extrabold text-chalk/70">The village is voting</p>
+        <p className="text-sm font-bold text-mute">
           {pub.votes_cast} of {pub.votes_needed} have voted
         </p>
         <Countdown />
@@ -452,9 +457,11 @@ export function DayVoteScreen({ view, submit, busy }: PhaseProps) {
     <div className="flex flex-1 flex-col">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <p className="label mb-0.5">Who leaves the village?</p>
-          <p className="text-sm text-mute">
-            {pub.votes_cast} of {pub.votes_needed} voted
+          <p className="font-display text-xl font-extrabold leading-tight text-chalk">
+            Who leaves the village?
+          </p>
+          <p className="mt-0.5 text-sm font-semibold text-mute">
+            <span className="text-accent">{pub.votes_cast}</span> of {pub.votes_needed} voted
           </p>
         </div>
         <Countdown />
@@ -470,7 +477,7 @@ export function DayVoteScreen({ view, submit, busy }: PhaseProps) {
       <Spacer />
 
       {iVoted ? (
-        <p className="rounded-2xl border border-edge bg-ash/50 p-4 text-center text-sm text-mute">
+        <p className="rounded-[1.4rem] border-2 border-moss/45 bg-moss/10 p-4 text-center text-sm font-bold text-moss">
           Vote locked in.
         </p>
       ) : (
@@ -508,7 +515,8 @@ export function ResultScreen({ view }: PhaseProps) {
   if (result.aborted) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-        <p className="font-display text-3xl text-chalk">Round abandoned</p>
+        <GameCharacter game="night_village" size={64} className="opacity-50" />
+        <p className="font-display text-3xl font-extrabold text-chalk">Round abandoned</p>
         <p className="subtitle">Too few players left to continue.</p>
         <button className="btn-primary mt-4" onClick={() => navigate(`/g/${code}`)}>
           Back to the lobby
@@ -522,14 +530,13 @@ export function ResultScreen({ view }: PhaseProps) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div
-        className={`rounded-3xl border p-6 text-center ${
-          villageWon ? 'border-moss/40 bg-moss/10' : 'border-blood/40 bg-blood/10'
-        }`}
+      <HeroPanel
+        className="animate-pop-in"
+        tone={villageWon ? 'moss' : 'blood'}
+        kicker={villageWon ? 'The village wins' : 'The wolves win'}
       >
-        <p className="label mb-1">{villageWon ? 'The village wins' : 'The wolves win'}</p>
         <NarrationText lines={lines} />
-      </div>
+      </HeroPanel>
 
       <div className="card mt-4">
         <p className="label">Everyone</p>
@@ -537,14 +544,18 @@ export function ResultScreen({ view }: PhaseProps) {
           {view.players.map((p) => (
             <div
               key={p.player_id}
-              className={`flex items-center gap-2.5 rounded-2xl border p-2.5 ${
-                p.role === 'wolf' ? 'border-blood/40 bg-blood/5' : 'border-edge/70'
+              className={`flex items-center gap-2.5 rounded-2xl border-2 p-2.5 ${
+                p.role === 'wolf' ? 'border-blood/50 bg-blood/10' : 'border-edge/70 bg-slatey/40'
               }`}
             >
               <AvatarBadge avatarKey={p.avatar_key} size={34} dimmed={!p.is_alive} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-chalk">{p.nickname}</p>
-                <p className="text-[0.68rem] text-mute">{roleWord(p.role ?? '')}</p>
+                <p className="truncate text-sm font-bold text-chalk">{p.nickname}</p>
+                <p className={`text-[0.66rem] font-extrabold uppercase tracking-wide ${
+                  p.role === 'wolf' ? 'text-blood' : 'text-mute'
+                }`}>
+                  {roleWord(p.role ?? '')}
+                </p>
               </div>
             </div>
           ))}
