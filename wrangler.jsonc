@@ -1,0 +1,12 @@
+{
+  // Hearth is a static SPA — no server-side Worker code. This config exists so
+  // `wrangler deploy` uploads ./dist as static assets instead of trying to
+  // auto-configure the Cloudflare Vite plugin, which needs Vite 6+.
+  "name": "hearth",
+  "compatibility_date": "2026-08-29",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for /g/:code and every other client-side route.
+    "not_found_handling": "single-page-application"
+  }
+}
