@@ -148,6 +148,7 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
         <>
           <DrawingCanvas
             roundId={view.round_id}
+            turnKey={`${pub.pass}:${pub.turn}`}
             strokes={strokesOf(view)}
             myTurn={myTurn && !busy}
             myColor={myColor}

@@ -60,6 +60,7 @@ export function DrawingView({
  */
 export function DrawingCanvas({
   roundId,
+  turnKey,
   strokes,
   myTurn,
   myColor,
@@ -67,6 +68,8 @@ export function DrawingCanvas({
   onCommit,
 }: {
   roundId: string;
+  /** Changes on every turn, e.g. `${pass}:${turn}` — resets the one-stroke lock. */
+  turnKey: string;
   strokes: StrokeData[];
   myTurn: boolean;
   myColor: string;
@@ -111,6 +114,16 @@ export function DrawingCanvas({
   useEffect(() => {
     setRemote({});
   }, [strokes.length]);
+
+  // The canvas stays mounted across every pass, so the one-stroke-per-turn
+  // lock has to be released when the turn moves on — otherwise a player can
+  // never draw again after their first turn.
+  useEffect(() => {
+    committed.current = false;
+    drawing.current = false;
+    raw.current = [];
+    setLive([]);
+  }, [turnKey]);
 
   const toNormalised = useCallback((e: React.PointerEvent): Point => {
     const rect = svgRef.current!.getBoundingClientRect();
