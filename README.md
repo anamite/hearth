@@ -71,12 +71,18 @@ supabase/
 
 ### Adding a fourth game
 
-Per spec §10.1 this must touch only:
+**See [docs/ADDING_A_GAME.md](docs/ADDING_A_GAME.md)** — the full guide: the
+phase-machine model, the complete file-by-file touch list, the design language
+your screens should follow, the backend surface a game may use, and the
+pitfalls that nothing in the build will catch for you.
 
-1. five new `{game}_*` functions in a new migration
+The short version, per spec §10.1 — a game touches only:
+
+1. nine new `{game}_*` functions in a new migration
 2. one branch in each dispatcher in `0003_core.sql`
 3. a new `src/backend/mock/games/{game}.ts` and `src/games/{game}/`
-4. one line in `src/games/manifest.ts`
+4. one line in `src/games/manifest.ts`, plus its entries in the theme,
+   mascot and stats-column registries
 
 Dial was built third specifically to prove that boundary holds. It does.
 
