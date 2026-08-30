@@ -1,14 +1,14 @@
 # Adding a game to Hearth
 
-Everything you need to ship a fourth game without breaking the three that
+Everything you need to ship another game without breaking the six that
 already work. Read the whole thing once before you write any code — most of
 the mistakes available to you are structural, and cheap to avoid up front.
 
 **Short answer to "how hard is it?"** — about a day for a simple game. The
-architecture was built for this: three games ship, and Dial was written third
-specifically to prove the seams hold. Nothing in the router, the store, the
-poll loop, the Supabase client, the lobby or the RLS policies needs to know
-your game exists.
+architecture was built for this: six games ship, and Grid, Bid and Nerve were
+each added afterwards by following this document. Nothing in the router, the
+store, the poll loop, the Supabase client, the lobby or the RLS policies needs
+to know your game exists.
 
 There are **24 files/edits** in the complete list below. Nine are your own new
 files. Four are one-liners in registries. TypeScript forces six of them. The
@@ -403,7 +403,7 @@ your tests silently run on `DEFAULT_SETTINGS` and any override is ignored.
   on most.
 - **stats** after a completed round, and that an aborted round writes none.
 
-Run with `npx vitest run`. 69 tests pass today; yours should join them.
+Run with `npx vitest run`. 142 tests pass today; yours should join them.
 
 ---
 
@@ -865,10 +865,37 @@ a PR.
 Nothing cross-checks them. Disagreement = the lobby offers a game the backend
 refuses to start.
 
-### Pitfall 11: mock/SQL drift
-The tests cover TypeScript only. Nothing verifies the two implementations
-agree. Port after the mock settles, port mechanically, and re-read both side
-by side whenever you change either.
+### Pitfall 11: editing a migration that has already been applied
+**This one bit during Grid/Bid/Nerve.** §9 tells you to add your branches to
+the eleven dispatchers in `0003_core.sql`. That is right for a fresh
+`supabase db reset` — and a no-op for any database where `0003` has already
+run, because `db push` applies migrations by version and never re-runs one.
+The symptom is ugly: your game appears on the lobby card and then dies at
+`start_round` with `round_not_found`, in production only.
+
+Check before you push:
+
+```bash
+npx supabase migration list --linked
+```
+
+If `0003` shows a remote version, the dispatchers need a **forward
+migration** as well — see `0012_dispatchers_six_games.sql`, which re-declares
+all eleven. Every dispatcher is `create or replace`, so applying it to a
+database that already had the updated `0003` changes nothing. Keep the two
+copies in step; `npm run check:sql` now fails if the *winning* definition of
+any dispatcher stops routing a game in its `GAMES` list.
+
+### Pitfall 12: mock/SQL drift
+The vitest suites cover TypeScript only. Port after the mock settles, port
+mechanically, and re-read both side by side whenever you change either.
+
+`supabase/tests/smoke_games.sql` narrows the gap for the pure logic: it runs
+the same expectations the TypeScript asserts against the deployed functions,
+so scoring and resolution can be *shown* to agree rather than assumed to.
+Paste it into the SQL editor after a push and add your own game's cases to
+it. The round-scoped functions — setup, advance, action, the views — still
+need a real round played through the app in supabase mode.
 
 ---
 

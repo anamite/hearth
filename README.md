@@ -3,7 +3,8 @@
 Party games for people already in the same room. The phone holds the secrets;
 everything else happens out loud.
 
-Three games ship: **Fake Artist** (4–10), **Night Village** (6–12), **Dial** (3–10).
+Six games ship: **Fake Artist** (4–10), **Night Village** (6–12), **Dial** (3–10),
+**Grid** (1–12), **Bid** (2–8), **Nerve** (3–6).
 
 Built to `hearth-spec.md` v1.0.
 
@@ -53,8 +54,8 @@ src/
     mock/
       db.ts              localStorage tables, mirroring the SQL schema
       engine.ts          phase engine, get_my_view, the ServerGame interface
-      games/*.ts         the three games, server-side
-      __tests__/         69 tests incl. the secrecy invariant
+      games/*.ts         the six games, server-side
+      __tests__/         142 tests incl. the secrecy invariant
   games/
     manifest.ts          the only file that knows which games exist
     {game}/index.ts      module definition: settings schema + phase components
@@ -64,7 +65,7 @@ src/
   store/round.ts         the poll loop and the round view
 
 supabase/
-  migrations/            8 files: schema, RLS, core RPCs, three games, grants
+  migrations/            11 files: schema, RLS, core RPCs, six games, grants
   functions/             verify-turnstile edge function
   seed.sql               GENERATED — run `npm run seed:sql`
 ```
@@ -84,7 +85,8 @@ The short version, per spec §10.1 — a game touches only:
 4. one line in `src/games/manifest.ts`, plus its entries in the theme,
    mascot and stats-column registries
 
-Dial was built third specifically to prove that boundary holds. It does.
+Dial was built third specifically to prove that boundary holds; Grid, Bid and
+Nerve were added later the same way. It does.
 
 ---
 

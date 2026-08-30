@@ -24,6 +24,18 @@
   --accent-rgb: 34 211 238;   /* lagoon */
   --accent2-rgb: 255 197 61;  /* gold   */
 }
+[data-game='grid'] {
+  --accent-rgb: 185 242 39;   /* lime   */
+  --accent2-rgb: 255 122 41;  /* ember  */
+}
+[data-game='bid'] {
+  --accent-rgb: 255 197 61;   /* gold   */
+  --accent2-rgb: 255 61 139;  /* punch  */
+}
+[data-game='nerve'] {
+  --accent-rgb: 61 220 132;   /* moss   */
+  --accent2-rgb: 255 77 94;   /* blood  */
+}
 
 @layer base {
   html, body, #root {

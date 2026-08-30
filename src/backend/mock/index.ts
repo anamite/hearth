@@ -15,10 +15,16 @@ import { GameCtx, buildView, finaliseRound, gameFor, isDue, registerGame, runAdv
 import { fakeArtistServer } from './games/fakeArtist';
 import { dialServer } from './games/dial';
 import { nightVillageServer } from './games/nightVillage';
+import { gridServer } from './games/grid';
+import { bidServer } from './games/bid';
+import { nerveServer } from './games/nerve';
 
 registerGame(fakeArtistServer);
 registerGame(dialServer);
 registerGame(nightVillageServer);
+registerGame(gridServer);
+registerGame(bidServer);
+registerGame(nerveServer);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -299,6 +305,9 @@ export class MockBackend implements Backend {
       if (!me.is_host) throw new HearthError('not_host');
       if (this.activeRound(db, groupId)) throw new HearthError('round_active');
 
+      // A group created before these games existed has no key for them,
+      // so the defaults come first (§ legacy groups).
+      const base = defaultSettings();
       const group = db.groups.find((g) => g.id === groupId)!;
       group.settings = {
         ...group.settings,
@@ -306,6 +315,9 @@ export class MockBackend implements Backend {
         fake_artist: { ...group.settings.fake_artist, ...(settings.fake_artist ?? {}) },
         night_village: { ...group.settings.night_village, ...(settings.night_village ?? {}) },
         dial: { ...group.settings.dial, ...(settings.dial ?? {}) },
+        grid: { ...base.grid, ...group.settings.grid, ...(settings.grid ?? {}) },
+        bid: { ...base.bid, ...group.settings.bid, ...(settings.bid ?? {}) },
+        nerve: { ...base.nerve, ...group.settings.nerve, ...(settings.nerve ?? {}) },
       };
       broadcast({ scope: 'group', id: groupId, event: { type: 'settings_changed' } });
     });

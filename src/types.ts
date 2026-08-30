@@ -4,7 +4,13 @@
 // Mirrors spec §7 (RPC API) and §10 (game module interface).
 // ---------------------------------------------------------------
 
-export type GameType = 'fake_artist' | 'night_village' | 'dial';
+export type GameType =
+  | 'fake_artist'
+  | 'night_village'
+  | 'dial'
+  | 'grid'
+  | 'bid'
+  | 'nerve';
 
 export type AvatarKey =
   | 'fox' | 'owl' | 'bear' | 'frog' | 'whale'
@@ -65,10 +71,31 @@ export interface DialSettings {
   discussion_seconds: number;
 }
 
+export interface GridSettings {
+  /** Seconds each card stays on screen before the next one flips. */
+  reveal_seconds: number;
+  /** Show the running count of which numbers are already spent. */
+  show_tally: boolean;
+}
+
+export interface BidSettings {
+  bid_seconds: number;
+  reveal_seconds: number;
+}
+
+export interface NerveSettings {
+  wins_needed: number;
+  place_seconds: number;
+  turn_seconds: number;
+}
+
 export interface GroupSettings {
   fake_artist: FakeArtistSettings;
   night_village: NightVillageSettings;
   dial: DialSettings;
+  grid: GridSettings;
+  bid: BidSettings;
+  nerve: NerveSettings;
   /** player_id of the device that plays narration audio; null = host. */
   audio_speaker_id?: string | null;
 }
@@ -93,6 +120,19 @@ export const DEFAULT_SETTINGS: GroupSettings = {
     rounds_per_game: null,
     clue_seconds: 60,
     discussion_seconds: 120,
+  },
+  grid: {
+    reveal_seconds: 8,
+    show_tally: true,
+  },
+  bid: {
+    bid_seconds: 30,
+    reveal_seconds: 8,
+  },
+  nerve: {
+    wins_needed: 2,
+    place_seconds: 30,
+    turn_seconds: 45,
   },
   audio_speaker_id: null,
 };

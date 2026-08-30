@@ -22,7 +22,7 @@ const sources = files.map((f) => ({ name: f, sql: readFileSync(join(dir, f), 'ut
 const all = sources.map((s) => s.sql).join('\n');
 
 /** Only our own namespaces; built-ins and Postgres functions are ignored. */
-const OURS = /^(hearth_|game_|fake_artist_|night_village_|dial_|nv_|my_player_id|is_member)/;
+const OURS = /^(hearth_|game_|fake_artist_|night_village_|dial_|nv_|grid_|bid_|nerve_|my_player_id|is_member)/;
 
 // --- definitions -------------------------------------------------
 const defined = new Map(); // name -> arg count
@@ -69,7 +69,7 @@ for (const m of all.matchAll(grantRe)) {
 }
 
 // --- the dispatchers must cover every game (§10.1) ---------------
-const GAMES = ['fake_artist', 'night_village', 'dial'];
+const GAMES = ['fake_artist', 'night_village', 'dial', 'grid', 'bid', 'nerve'];
 const REQUIRED = [
   '_setup', '_public_view', '_private_view', '_action',
   '_advance', '_result', '_has_acted', '_on_left',
@@ -84,6 +84,35 @@ for (const g of GAMES) {
 for (const g of ['fake_artist', 'night_village']) {
   if (!defined.has(`${g}_role_visible`)) {
     problems.push(`game module ${g} is missing ${g}_role_visible()`);
+  }
+}
+
+/**
+ * Every dispatcher must actually route every game — checked against the
+ * LAST definition of each, because a later migration can replace an
+ * earlier one. Editing an already-applied migration in place looks right
+ * locally and silently never reaches a deployed database, so what counts
+ * is the definition that wins after all migrations have run.
+ */
+const DISPATCHERS = [
+  'game_setup', 'game_public_view', 'game_private_view', 'game_action',
+  'game_advance', 'game_apply_stats', 'game_on_player_left', 'game_has_acted',
+  'game_role_visible', 'game_min_players', 'game_max_players',
+];
+for (const fn of DISPATCHERS) {
+  const defRe = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn}\\s*\\(`, 'gi');
+  const starts = [...all.matchAll(defRe)].map((m) => m.index);
+  if (starts.length === 0) {
+    problems.push(`dispatcher ${fn}() is not defined anywhere`);
+    continue;
+  }
+  const last = starts[starts.length - 1];
+  const end = all.indexOf('$$;', last);
+  const body = all.slice(last, end < 0 ? undefined : end);
+  for (const g of GAMES) {
+    if (!body.includes(`'${g}'`)) {
+      problems.push(`the winning definition of ${fn}() does not route '${g}'`);
+    }
   }
 }
 

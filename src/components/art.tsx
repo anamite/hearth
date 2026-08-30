@@ -112,10 +112,92 @@ function GaugeGuy() {
   );
 }
 
+/** Grid — a ruled square with one cell already claimed. */
+function GridFace() {
+  return (
+    <>
+      <rect
+        x="7" y="9" width="50" height="46" rx="7"
+        fill={ACCENT}
+        stroke="#0B0A10"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+      />
+      {/* the ruled 5 x 5 */}
+      <g stroke="#0B0A10" strokeWidth="1.6" opacity="0.5">
+        <path d="M17 9v46M27 9v46M37 9v46M47 9v46" />
+        <path d="M7 19h50M7 29h50M7 39h50M7 49h50" />
+      </g>
+      <rect x="37" y="19" width="10" height="10" fill={ACCENT2} stroke="#0B0A10" strokeWidth="2" />
+      <circle cx="22" cy="34" r="3.2" fill="#0B0A10" />
+      <circle cx="42" cy="34" r="3.2" fill="#0B0A10" />
+      <path d="M24 45c3.5 3 12.5 3 16 0" stroke="#0B0A10" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+    </>
+  );
+}
+
+/** Bid — a numbered paper slip, face down and grinning about it. */
+function SlipGuy() {
+  return (
+    <>
+      <rect
+        x="12" y="8" width="34" height="46" rx="5"
+        fill="#0B0A10"
+        opacity="0.35"
+        transform="rotate(-9 29 31)"
+      />
+      <rect
+        x="16" y="10" width="34" height="46" rx="5"
+        fill={ACCENT}
+        stroke="#0B0A10"
+        strokeWidth="2.4"
+        transform="rotate(6 33 33)"
+      />
+      <g transform="rotate(6 33 33)">
+        <path d="M22 20h22M22 26h14" stroke="#0B0A10" strokeWidth="2.2" strokeLinecap="round" opacity="0.55" />
+        <circle cx="26" cy="38" r="3" fill="#0B0A10" />
+        <circle cx="40" cy="38" r="3" fill="#0B0A10" />
+        <path d="M26 46c3 3 11 3 14 0" stroke="#0B0A10" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+      </g>
+      <circle cx="49" cy="47" r="10" fill={ACCENT2} stroke="#0B0A10" strokeWidth="2.4" />
+      <path d="M49 41v12M45.5 44h6a2.6 2.6 0 0 1 0 5.2h-5a2.6 2.6 0 0 0 0 5.2h6"
+            stroke="#0B0A10" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </>
+  );
+}
+
+/** Nerve — a torn scrap, one eye open, an X bleeding through the back. */
+function ScrapFace() {
+  return (
+    <>
+      <path
+        d="M11 14l7-4 8 3 9-4 9 4 8-2-2 9 3 9-4 8 2 9-9-1-7 5-9-4-8 3-3-9-5-7 4-8-3-11Z"
+        fill={ACCENT}
+        stroke="#0B0A10"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M40 22l14 14M54 22 40 36"
+        stroke={ACCENT2}
+        strokeWidth="4.2"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+      <circle cx="26" cy="30" r="6.5" fill="#F4F1FA" stroke="#0B0A10" strokeWidth="2.4" />
+      <circle cx="27.5" cy="31" r="3" fill="#0B0A10" />
+      <path d="M22 43c4 2.5 10 2.5 14 0" stroke="#0B0A10" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+    </>
+  );
+}
+
 const MASCOTS: Record<GameType, () => JSX.Element> = {
   fake_artist: ArtistBlob,
   night_village: WolfHood,
   dial: GaugeGuy,
+  grid: GridFace,
+  bid: SlipGuy,
+  nerve: ScrapFace,
 };
 
 export function GameCharacter({

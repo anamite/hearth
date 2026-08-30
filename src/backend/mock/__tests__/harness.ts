@@ -7,10 +7,16 @@ import { GameCtx, buildView, finaliseRound, gameFor, isDue, registerGame, runAdv
 import { fakeArtistServer } from '../games/fakeArtist';
 import { dialServer } from '../games/dial';
 import { nightVillageServer } from '../games/nightVillage';
+import { gridServer } from '../games/grid';
+import { bidServer } from '../games/bid';
+import { nerveServer } from '../games/nerve';
 
 registerGame(fakeArtistServer);
 registerGame(dialServer);
 registerGame(nightVillageServer);
+registerGame(gridServer);
+registerGame(bidServer);
+registerGame(nerveServer);
 
 let seq = 0;
 const id = () => `id-${++seq}`;
@@ -34,6 +40,9 @@ export class Table {
       fake_artist: { ...DEFAULT_SETTINGS.fake_artist, ...(settings?.fake_artist ?? {}) },
       night_village: { ...DEFAULT_SETTINGS.night_village, ...(settings?.night_village ?? {}) },
       dial: { ...DEFAULT_SETTINGS.dial, ...(settings?.dial ?? {}) },
+      grid: { ...DEFAULT_SETTINGS.grid, ...(settings?.grid ?? {}) },
+      bid: { ...DEFAULT_SETTINGS.bid, ...(settings?.bid ?? {}) },
+      nerve: { ...DEFAULT_SETTINGS.nerve, ...(settings?.nerve ?? {}) },
     };
 
     this.groupId = id();

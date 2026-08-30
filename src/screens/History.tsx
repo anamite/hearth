@@ -46,14 +46,39 @@ function StatsTable({ gameType, rows }: { gameType: GameType; rows: PlayerStats[
             { head: 'Win rate', get: (r) => pct(r.games_won, r.games_played), emphasise: true },
             { head: 'Survived', get: (r) => pct(r.points, r.games_played) },
           ]
-        : [
-            { head: 'Played', get: (r) => String(r.games_played) },
-            { head: 'Points', get: (r) => String(r.points), emphasise: true },
-            {
-              head: 'Avg',
-              get: (r) => (r.games_played ? (r.points / r.games_played).toFixed(1) : '—'),
-            },
-          ];
+        : gameType === 'grid'
+          ? [
+              { head: 'Played', get: (r) => String(r.games_played) },
+              { head: 'Best grids', get: (r) => String(r.games_won) },
+              {
+                head: 'Avg score',
+                get: (r) => (r.games_played ? (r.points / r.games_played).toFixed(1) : '—'),
+                emphasise: true,
+              },
+            ]
+          : gameType === 'bid'
+            ? [
+                { head: 'Played', get: (r) => String(r.games_played) },
+                { head: 'Won', get: (r) => pct(r.games_won, r.games_played), emphasise: true },
+                {
+                  head: 'Net',
+                  get: (r) => (r.points > 0 ? `+${r.points}` : String(r.points)),
+                },
+              ]
+            : gameType === 'nerve'
+              ? [
+                  { head: 'Played', get: (r) => String(r.games_played) },
+                  { head: 'Won', get: (r) => pct(r.games_won, r.games_played), emphasise: true },
+                  { head: 'Rounds', get: (r) => String(r.points) },
+                ]
+              : [
+                  { head: 'Played', get: (r) => String(r.games_played) },
+                  { head: 'Points', get: (r) => String(r.points), emphasise: true },
+                  {
+                    head: 'Avg',
+                    get: (r) => (r.games_played ? (r.points / r.games_played).toFixed(1) : '—'),
+                  },
+                ];
 
   const sorted = [...rows].sort((a, b) => b.games_played - a.games_played);
 

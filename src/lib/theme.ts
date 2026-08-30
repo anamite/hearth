@@ -23,6 +23,9 @@ export const GAME_THEMES: Record<GameType, GameTheme> = {
   fake_artist: { accent: '#FF3D8B', accent2: '#22D3EE', flavour: 'Bluff' },
   night_village: { accent: '#A78BFA', accent2: '#FF4D5E', flavour: 'Hunt' },
   dial: { accent: '#22D3EE', accent2: '#FFC53D', flavour: 'Team' },
+  grid: { accent: '#B9F227', accent2: '#FF7A29', flavour: 'Race' },
+  bid: { accent: '#FFC53D', accent2: '#FF3D8B', flavour: 'Duel' },
+  nerve: { accent: '#3DDC84', accent2: '#FF4D5E', flavour: 'Dare' },
 };
 
 export function gameTheme(id: GameType | null | undefined): GameTheme {
