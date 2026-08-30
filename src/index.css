@@ -174,3 +174,59 @@
     .motion-safe-only { animation: none !important; }
   }
 }
+
+/* Registered so the fade lengths below can transition rather than snap. */
+@property --fade-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fade-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@layer components {
+  /* A screen that never scrolls itself — it owns exactly one viewport and
+     something inside it (a .scroll-fade list) does the scrolling, so the
+     buttons at the bottom stay put no matter how long the list gets. */
+  .screen-fixed {
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+}
+
+@layer utilities {
+  /* A list that scrolls inside its own box and fades out at whichever edge
+     still has more list behind it. The two lengths are written by
+     useScrollFade(), so an edge you've actually reached stays crisp. */
+  .scroll-fade {
+    --fade-top: 0px;
+    --fade-bottom: 0px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    transition: --fade-top 160ms linear, --fade-bottom 160ms linear;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--fade-top),
+      #000 calc(100% - var(--fade-bottom)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 var(--fade-top),
+      #000 calc(100% - var(--fade-bottom)),
+      transparent 100%
+    );
+  }
+  .scroll-fade::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}

@@ -1,36 +1,46 @@
 import { Link } from 'react-router-dom';
-import { Screen, Spacer, Sticker } from '@/components/ui';
+import { Screen, Sticker } from '@/components/ui';
 import { Blob, GameCharacter, HearthMark, Squiggle } from '@/components/art';
 import { GAMES } from '@/games/manifest';
 import { gameTheme } from '@/lib/theme';
+import { useScrollFade } from '@/lib/hooks';
 import { IS_MOCK } from '@/backend';
 
 export function LandingScreen() {
+  // The list scrolls inside its own box so the two buttons below never
+  // leave the screen, however many games the manifest grows to.
+  const listRef = useScrollFade<HTMLDivElement>([GAMES.length]);
+
   return (
-    <Screen className="overflow-hidden">
+    <Screen className="screen-fixed">
       {/* Background shapes. Decorative only. */}
       <Blob className="pointer-events-none absolute -left-24 -top-16 h-64 w-64 animate-float-slow blur-2xl" opacity={0.22} />
       <Blob className="pointer-events-none absolute -right-28 top-40 h-56 w-56 animate-float blur-2xl" opacity={0.14} />
 
-      <div className="relative flex flex-1 flex-col justify-center py-8">
-        <div className="flex items-center gap-3">
-          <span className="flex h-14 w-14 rotate-[-6deg] items-center justify-center rounded-2xl border-2 border-black/40 bg-slatey shadow-pop">
-            <HearthMark size={30} />
-          </span>
-          <Sticker tone="accent2" tilt={3}>Same room · no accounts</Sticker>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="flex h-14 w-14 rotate-[-6deg] items-center justify-center rounded-2xl border-2 border-black/40 bg-slatey shadow-pop">
+              <HearthMark size={30} />
+            </span>
+            <Sticker tone="accent2" tilt={3}>Same room · no accounts</Sticker>
+          </div>
+
+          <h1 className="title mt-6 text-[3.4rem] leading-[0.9]">
+            Hearth
+          </h1>
+          <Squiggle className="-mt-1 h-3 w-32" />
+
+          <p className="subtitle mt-4 max-w-[20rem] text-[0.95rem]">
+            Party games for people already in the same room. Your phone holds the
+            secrets. Everything else happens out loud.
+          </p>
         </div>
 
-        <h1 className="title mt-6 text-[3.4rem] leading-[0.9]">
-          Hearth
-        </h1>
-        <Squiggle className="-mt-1 h-3 w-32" />
-
-        <p className="subtitle mt-4 max-w-[20rem] text-[0.95rem]">
-          Party games for people already in the same room. Your phone holds the
-          secrets. Everything else happens out loud.
-        </p>
-
-        <div className="mt-8 space-y-3">
+        <div
+          ref={listRef}
+          className="scroll-fade mt-7 min-h-0 flex-1 space-y-3 pb-1"
+        >
           {GAMES.map((g, i) => {
             const t = gameTheme(g.id);
             return (
@@ -61,28 +71,28 @@ export function LandingScreen() {
         </div>
       </div>
 
-      <Spacer />
+      <div className="relative shrink-0 pt-4">
+        <div className="space-y-2.5">
+          <Link to="/create" className="btn-primary">
+            Start a group
+          </Link>
+          <Link to="/join" className="btn-ghost">
+            Join a group
+          </Link>
+        </div>
 
-      <div className="relative space-y-2.5">
-        <Link to="/create" className="btn-primary">
-          Start a group
-        </Link>
-        <Link to="/join" className="btn-ghost">
-          Join a group
-        </Link>
+        <p className="mt-4 text-center text-xs leading-relaxed text-mute/70">
+          No accounts. No email. No app store.
+          {IS_MOCK && (
+            <>
+              <br />
+              <span className="font-semibold text-accent/90">
+                Local mode — open a new tab to add another player.
+              </span>
+            </>
+          )}
+        </p>
       </div>
-
-      <p className="relative mt-5 text-center text-xs leading-relaxed text-mute/70">
-        No accounts. No email. No app store.
-        {IS_MOCK && (
-          <>
-            <br />
-            <span className="font-semibold text-accent/90">
-              Local mode — open a new tab to add another player.
-            </span>
-          </>
-        )}
-      </p>
     </Screen>
   );
 }

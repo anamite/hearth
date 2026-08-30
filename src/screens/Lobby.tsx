@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import type { GameType } from '@/types';
 import { HearthError } from '@/types';
 import { getBackend } from '@/backend';
 import { useLobby } from '@/lib/useLobby';
+import { useReorderFlip, useScrollFade } from '@/lib/hooks';
 import { GAMES } from '@/games/manifest';
 import { gameTheme } from '@/lib/theme';
 import { GameCharacter } from '@/components/art';
 import { AvatarBadge } from '@/components/Avatar';
 import {
-  CodeDisplay, ErrorNote, Loading, Screen, Spacer, Sticker, TopBar,
+  CodeDisplay, ErrorNote, Loading, Screen, Sticker, TopBar,
 } from '@/components/ui';
 
 export function LobbyScreen() {
@@ -19,6 +20,26 @@ export function LobbyScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const present = useMemo(
+    () => lobby?.players.filter((p) => !p.has_left) ?? [],
+    [lobby],
+  );
+  const here = present.length;
+
+  /**
+   * Playable games first, in manifest order within each group — as people
+   * arrive, whatever just unlocked rises to the top of the list.
+   */
+  const sortedGames = useMemo(() => {
+    const locked = (g: (typeof GAMES)[number]) =>
+      here < g.minPlayers || here > g.maxPlayers ? 1 : 0;
+    return [...GAMES].sort((a, b) => locked(a) - locked(b));
+  }, [here]);
+
+  const gamesRef = useScrollFade<HTMLDivElement>([here]);
+  const playersRef = useScrollFade<HTMLDivElement>([here]);
+  useReorderFlip(gamesRef, sortedGames.map((g) => g.id).join(','));
 
   // A round is live — everyone follows it in.
   useEffect(() => {
@@ -31,7 +52,7 @@ export function LobbyScreen() {
       <Screen>
         <TopBar title="No such group" onBack={() => navigate('/')} />
         <p className="subtitle">That code doesn’t match a group. It may have expired.</p>
-        <Spacer />
+        <div className="flex-1" />
         <Link to="/" className="btn-primary">
           Back to the start
         </Link>
@@ -40,7 +61,6 @@ export function LobbyScreen() {
   }
   if (!lobby) return <Screen><Loading label="Finding your group…" /></Screen>;
 
-  const present = lobby.players.filter((p) => !p.has_left);
   const me = lobby.me;
   const everyoneReady = present.every((p) => p.is_ready);
 
@@ -75,30 +95,35 @@ export function LobbyScreen() {
   }
 
   return (
-    <Screen>
-      <TopBar
-        eyebrow="Lobby"
-        title={lobby.group.display_name}
-        subtitle={`${present.length} ${present.length === 1 ? 'player' : 'players'} here`}
-        right={
-          <Link
-            to={`/g/${code}/history`}
-            className="mt-1 shrink-0 rounded-2xl border-2 border-edge bg-slatey/70 px-3 py-2
-                       text-[0.7rem] font-extrabold uppercase tracking-wider text-mute
-                       shadow-pop-sm transition-all duration-100 active:translate-y-[3px] active:shadow-none"
-          >
-            History
-          </Link>
-        }
-      />
+    <Screen className="screen-fixed">
+      <div className="shrink-0">
+        <TopBar
+          eyebrow="Lobby"
+          title={lobby.group.display_name}
+          subtitle={`${here} ${here === 1 ? 'player' : 'players'} here`}
+          right={
+            <Link
+              to={`/g/${code}/history`}
+              className="mt-1 shrink-0 rounded-2xl border-2 border-edge bg-slatey/70 px-3 py-2
+                         text-[0.7rem] font-extrabold uppercase tracking-wider text-mute
+                         shadow-pop-sm transition-all duration-100 active:translate-y-[3px] active:shadow-none"
+            >
+              History
+            </Link>
+          }
+        />
 
-      <CodeDisplay code={lobby.group.code} onCopy={copyLink} />
-      <p className="mt-2.5 text-center text-xs font-semibold text-mute">
-        {copied ? '✓ Link copied' : 'Tap to copy the join link · say the PIN out loud'}
-      </p>
+        <CodeDisplay code={lobby.group.code} onCopy={copyLink} />
+        <p className="mt-2.5 text-center text-xs font-semibold text-mute">
+          {copied ? '✓ Link copied' : 'Tap to copy the join link · say the PIN out loud'}
+        </p>
+      </div>
 
-      {/* Players */}
-      <div className="mt-6 flex flex-wrap gap-2">
+      {/* Players — capped so a big group can’t push the games off-screen. */}
+      <div
+        ref={playersRef}
+        className="scroll-fade mt-4 flex min-h-[3.6rem] max-h-[8.5rem] flex-wrap gap-2"
+      >
         {present.map((p, i) => (
           <div
             key={p.player_id}
@@ -127,21 +152,22 @@ export function LobbyScreen() {
       </div>
 
       {/* Games */}
-      <div className="mt-8 flex items-center gap-2">
+      <div className="mt-5 flex shrink-0 items-center gap-2">
         <p className="label mb-0">Pick a game</p>
         <span className="h-0.5 flex-1 rounded-full bg-edge/70" />
       </div>
 
-      <div className="mt-3 space-y-3">
-        {GAMES.map((g) => {
-          const tooFew = present.length < g.minPlayers;
-          const tooMany = present.length > g.maxPlayers;
+      <div ref={gamesRef} className="scroll-fade mt-3 min-h-0 flex-1 basis-40 space-y-3 pb-1">
+        {sortedGames.map((g) => {
+          const tooFew = here < g.minPlayers;
+          const tooMany = here > g.maxPlayers;
           const blocked = tooFew || tooMany;
           const t = gameTheme(g.id);
           return (
             <button
               key={g.id}
               data-game={g.id}
+              data-flip-id={g.id}
               disabled={blocked || !me.is_host || busy}
               onClick={() => start(g.id)}
               className={`relative w-full overflow-hidden rounded-[1.5rem] border-2 p-4 pl-[4.6rem] text-left
@@ -175,7 +201,7 @@ export function LobbyScreen() {
                 {g.headline && !blocked && <span className="pill-accent">{g.headline}</span>}
                 {tooFew && <Sticker tone="blood" tilt={-1.5}>Needs {g.minPlayers}+</Sticker>}
                 {tooMany && <Sticker tone="blood" tilt={-1.5}>Max {g.maxPlayers}</Sticker>}
-                {!blocked && g.bestWith && present.length < g.bestWith && (
+                {!blocked && g.bestWith && here < g.bestWith && (
                   <span className="pill">Best with {g.bestWith}+</span>
                 )}
               </div>
@@ -184,39 +210,40 @@ export function LobbyScreen() {
         })}
       </div>
 
-      <ErrorNote>{error}</ErrorNote>
-      <Spacer />
+      <div className="shrink-0">
+        <ErrorNote>{error}</ErrorNote>
 
-      <div className="mt-6 space-y-2.5">
-        {!me.is_host && (
-          <button
-            className={me.is_ready ? 'btn-ghost' : 'btn-primary'}
-            onClick={() => getBackend().setReady(lobby.group.id, !me.is_ready)}
-          >
-            {me.is_ready ? 'I’m not ready' : 'I’m ready'}
-          </button>
-        )}
-        {me.is_host && !everyoneReady && (
-          <p className="text-center text-xs text-mute">
-            Waiting on {present.filter((p) => !p.is_ready).map((p) => p.nickname).join(', ')}
-            {' '}— you can start anyway.
-          </p>
-        )}
-        <div className="flex gap-2.5">
-          {me.is_host && (
-            <Link to={`/g/${code}/settings`} className="btn-ghost">
-              Settings
-            </Link>
+        <div className="mt-4 space-y-2.5">
+          {!me.is_host && (
+            <button
+              className={me.is_ready ? 'btn-ghost' : 'btn-primary'}
+              onClick={() => getBackend().setReady(lobby.group.id, !me.is_ready)}
+            >
+              {me.is_ready ? 'I’m not ready' : 'I’m ready'}
+            </button>
           )}
-          <button
-            className="btn-quiet"
-            onClick={async () => {
-              await getBackend().leaveGroup(lobby.group.id);
-              navigate('/');
-            }}
-          >
-            Leave
-          </button>
+          {me.is_host && !everyoneReady && (
+            <p className="text-center text-xs text-mute">
+              Waiting on {present.filter((p) => !p.is_ready).map((p) => p.nickname).join(', ')}
+              {' '}— you can start anyway.
+            </p>
+          )}
+          <div className="flex gap-2.5">
+            {me.is_host && (
+              <Link to={`/g/${code}/settings`} className="btn-ghost">
+                Settings
+              </Link>
+            )}
+            <button
+              className="btn-quiet"
+              onClick={async () => {
+                await getBackend().leaveGroup(lobby.group.id);
+                navigate('/');
+              }}
+            >
+              Leave
+            </button>
+          </div>
         </div>
       </div>
     </Screen>
