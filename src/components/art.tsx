@@ -191,6 +191,65 @@ function ScrapFace() {
   );
 }
 
+/** Fold — a fan of cards, sweating slightly. */
+function CardFan() {
+  return (
+    <>
+      <rect x="8" y="18" width="26" height="36" rx="4" fill="#0B0A10" opacity="0.35"
+            transform="rotate(-18 21 36)" />
+      <rect x="10" y="16" width="26" height="36" rx="4" fill={ACCENT2}
+            stroke="#0B0A10" strokeWidth="2.4" transform="rotate(-12 23 34)" />
+      <rect x="20" y="12" width="28" height="40" rx="5" fill={ACCENT}
+            stroke="#0B0A10" strokeWidth="2.4" transform="rotate(7 34 32)" />
+      <g transform="rotate(7 34 32)">
+        <circle cx="29" cy="28" r="3.1" fill="#0B0A10" />
+        <circle cx="40" cy="28" r="3.1" fill="#0B0A10" />
+        <path d="M29 42c3-3.4 9-3.4 12 0" stroke="#0B0A10" strokeWidth="2.6"
+              strokeLinecap="round" fill="none" />
+      </g>
+      <path d="M52 42c1.6 2.6 2.6 4.2 2.6 5.6a2.6 2.6 0 0 1-5.2 0c0-1.4 1-3 2.6-5.6Z"
+            fill={ACCENT2} stroke="#0B0A10" strokeWidth="2" />
+    </>
+  );
+}
+
+/** Season — the weather over the table, half sun and half cloud. */
+function WeatherFace() {
+  return (
+    <>
+      <circle cx="32" cy="30" r="19" fill={ACCENT2} stroke="#0B0A10" strokeWidth="2.4" />
+      <g stroke="#0B0A10" strokeWidth="2.4" strokeLinecap="round">
+        <path d="M32 5v5M32 50v5M7 30h5M52 30h5M14 12l3.5 3.5M46.5 44.5 50 48M50 12l-3.5 3.5M17.5 44.5 14 48" />
+      </g>
+      <path d="M16 44a8 8 0 0 1 1.4-15.9 11 11 0 0 1 20.8 3.2A7.5 7.5 0 0 1 46 44Z"
+            fill={ACCENT} stroke="#0B0A10" strokeWidth="2.4" strokeLinejoin="round" />
+      <circle cx="26" cy="37" r="2.8" fill="#0B0A10" />
+      <circle cx="38" cy="37" r="2.8" fill="#0B0A10" />
+      <path d="M27 43c2.6 2.2 7.4 2.2 10 0" stroke="#0B0A10" strokeWidth="2.4"
+            strokeLinecap="round" fill="none" />
+    </>
+  );
+}
+
+/** Envelope — sealed, and quietly watching you. */
+function EnvelopeFace() {
+  return (
+    <>
+      <rect x="6" y="14" width="52" height="37" rx="5" fill={ACCENT}
+            stroke="#0B0A10" strokeWidth="2.4" strokeLinejoin="round" />
+      <path d="M6 18l26 17 26-17" stroke="#0B0A10" strokeWidth="2.4"
+            strokeLinejoin="round" fill="none" opacity="0.5" />
+      <circle cx="23" cy="30" r="3.2" fill="#0B0A10" />
+      <circle cx="41" cy="30" r="3.2" fill="#0B0A10" />
+      <path d="M24 42c4 2.8 12 2.8 16 0" stroke="#0B0A10" strokeWidth="2.6"
+            strokeLinecap="round" fill="none" />
+      <circle cx="47" cy="45" r="8.5" fill={ACCENT2} stroke="#0B0A10" strokeWidth="2.4" />
+      <path d="M43.5 45.5l2.6 2.6 4.6-5" stroke="#0B0A10" strokeWidth="2.4"
+            strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </>
+  );
+}
+
 const MASCOTS: Record<GameType, () => JSX.Element> = {
   fake_artist: ArtistBlob,
   night_village: WolfHood,
@@ -198,6 +257,9 @@ const MASCOTS: Record<GameType, () => JSX.Element> = {
   grid: GridFace,
   bid: SlipGuy,
   nerve: ScrapFace,
+  fold: CardFan,
+  season: WeatherFace,
+  envelope: EnvelopeFace,
 };
 
 export function GameCharacter({

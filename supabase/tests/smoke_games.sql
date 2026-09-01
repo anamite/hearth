@@ -110,6 +110,73 @@ begin
     then raise exception 'the prize values are wrong'; end if;
   n := n + 2;
 
+  -- Season: what a season's tricks are worth --------------------------
+  if season_scoring_text('normal') <> 'Tricks this season are worth one each.'
+    then raise exception 'normal season text'; end if;
+  if season_scoring_text('double') <> 'Tricks this season are worth double.'
+    then raise exception 'double season text'; end if;
+  if season_scoring_text('void') <> 'Tricks this season are worth nothing at all.'
+    then raise exception 'void season text'; end if;
+  -- Anything unrecognised must read as an ordinary season, never blank.
+  if season_scoring_text('nonsense') <> 'Tricks this season are worth one each.'
+    then raise exception 'unknown scoring should fall back to normal'; end if;
+  n := n + 4;
+
+  -- Envelope: the event bank ------------------------------------------
+  if jsonb_array_length(envelope_event_bank()) <> 11
+    then raise exception 'the event bank has changed size'; end if;
+  -- Every event needs the three fields the screen renders.
+  if exists (select 1 from jsonb_array_elements(envelope_event_bank()) e
+             where coalesce(e ->> 'id', '') = ''
+                or coalesce(e ->> 'title', '') = ''
+                or coalesce(e ->> 'text', '') = '')
+    then raise exception 'an event is missing id, title or text'; end if;
+  -- Ids are what the used-list is keyed on, so they must be distinct.
+  if (select count(distinct e ->> 'id') from jsonb_array_elements(envelope_event_bank()) e) <> 11
+    then raise exception 'duplicate event id'; end if;
+  n := n + 3;
+
+  -- A {a}/{b} placeholder only ever appears on an event that names
+  -- somebody to fill it, or it reaches the table as literal braces.
+  if exists (select 1 from jsonb_array_elements(envelope_event_bank()) e
+             where (e ->> 'text') like '%{a}%'
+               and coalesce((e ->> 'targets')::int, 0) < 1)
+    then raise exception 'an event uses {a} without asking for a target'; end if;
+  if exists (select 1 from jsonb_array_elements(envelope_event_bank()) e
+             where (e ->> 'text') like '%{b}%'
+               and coalesce((e ->> 'targets')::int, 0) < 2)
+    then raise exception 'an event uses {b} without asking for two targets'; end if;
+  -- And the reverse: an event that asks for targets must use them.
+  if exists (select 1 from jsonb_array_elements(envelope_event_bank()) e
+             where coalesce((e ->> 'targets')::int, 0) >= 1
+               and (e ->> 'text') not like '%{a}%')
+    then raise exception 'an event names a target it never mentions'; end if;
+  n := n + 3;
+
+  -- Both content banks reached the database (npm run seed:sql) ---------
+  if (select count(*) from content_items where game_type = 'season' and active) < 30
+    then raise exception 'the season rule bank is not seeded'; end if;
+  if (select count(*) from content_items where game_type = 'envelope' and active) < 40
+    then raise exception 'the envelope assignment bank is not seeded'; end if;
+  -- Every assignment carries the points it is worth, or scoring reads 0.
+  if exists (select 1 from content_items
+             where game_type = 'envelope' and active
+               and coalesce((payload ->> 'points')::int, 0) <= 0)
+    then raise exception 'an envelope assignment is worth nothing'; end if;
+  n := n + 3;
+
+  -- Fold: the dispatchers route all nine games -------------------------
+  if game_min_players('fold') <> 2 or game_max_players('fold') <> 8
+    then raise exception 'fold player bounds'; end if;
+  if game_min_players('season') <> 3 or game_max_players('season') <> 6
+    then raise exception 'season player bounds'; end if;
+  if game_min_players('envelope') <> 4 or game_max_players('envelope') <> 8
+    then raise exception 'envelope player bounds'; end if;
+  -- An unknown game must still be unstartable.
+  if game_min_players('not_a_game') <> 99
+    then raise exception 'an unknown game is startable'; end if;
+  n := n + 4;
+
   raise notice 'OK — % assertions passed against the deployed functions.', n;
 end $$;
 

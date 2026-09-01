@@ -5,8 +5,8 @@ already work. Read the whole thing once before you write any code — most of
 the mistakes available to you are structural, and cheap to avoid up front.
 
 **Short answer to "how hard is it?"** — about a day for a simple game. The
-architecture was built for this: six games ship, and Grid, Bid and Nerve were
-each added afterwards by following this document. Nothing in the router, the
+architecture was built for this: nine games ship, and Grid, Bid, Nerve, Fold,
+Season and Envelope were each added afterwards by following this document. Nothing in the router, the
 store, the poll loop, the Supabase client, the lobby or the RLS policies needs
 to know your game exists.
 
@@ -105,7 +105,7 @@ you.
 | `src/backend/mock/__tests__/charades.test.ts` | its tests |
 | `src/games/charades/index.ts` | the `GameModule` |
 | `src/games/charades/screens.tsx` | one component per phase |
-| `supabase/migrations/0009_game_charades.sql` | the SQL port |
+| `supabase/migrations/00NN_game_charades.sql` | the SQL port |
 | `content/charades.json` | *only if* the game needs a content bank |
 
 ### Edits (15)
@@ -403,7 +403,7 @@ your tests silently run on `DEFAULT_SETTINGS` and any override is ignored.
   on most.
 - **stats** after a completed round, and that an aborted round writes none.
 
-Run with `npx vitest run`. 142 tests pass today; yours should join them.
+Run with `npx vitest run`. 221 tests pass today; yours should join them.
 
 ---
 
@@ -534,7 +534,7 @@ transliteration, not redesign. **Port the mock after it is tested and settled**
 
 ### The nine functions
 
-New file `supabase/migrations/0009_game_charades.sql`:
+New file `supabase/migrations/00NN_game_charades.sql` (next free number):
 
 | SQL function | Mock equivalent |
 |---|---|
@@ -594,7 +594,7 @@ Always `coalesce` to a literal default. Always.
 `scripts/check-sql-refs.mjs` has two hardcoded lists:
 ```js
 const OURS = /^(hearth_|game_|fake_artist_|night_village_|dial_|nv_|charades_|…)/;
-const GAMES = ['fake_artist', 'night_village', 'dial', 'charades'];
+const GAMES = ['fake_artist', 'night_village', 'dial', /* … */ 'charades'];
 ```
 Without the first, calls to your functions are never validated. Without the
 second, a missing `charades_advance()` is never reported. Neither omission
@@ -880,7 +880,7 @@ npx supabase migration list --linked
 ```
 
 If `0003` shows a remote version, the dispatchers need a **forward
-migration** as well — see `0012_dispatchers_six_games.sql`, which re-declares
+migration** as well — see `0016_dispatchers_nine_games.sql`, which re-declares
 all eleven. Every dispatcher is `create or replace`, so applying it to a
 database that already had the updated `0003` changes nothing. Keep the two
 copies in step; `npm run check:sql` now fails if the *winning* definition of

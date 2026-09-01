@@ -18,6 +18,9 @@ import { nightVillageServer } from './games/nightVillage';
 import { gridServer } from './games/grid';
 import { bidServer } from './games/bid';
 import { nerveServer } from './games/nerve';
+import { foldServer } from './games/fold';
+import { seasonServer } from './games/season';
+import { envelopeServer } from './games/envelope';
 
 registerGame(fakeArtistServer);
 registerGame(dialServer);
@@ -25,6 +28,9 @@ registerGame(nightVillageServer);
 registerGame(gridServer);
 registerGame(bidServer);
 registerGame(nerveServer);
+registerGame(foldServer);
+registerGame(seasonServer);
+registerGame(envelopeServer);
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -318,6 +324,9 @@ export class MockBackend implements Backend {
         grid: { ...base.grid, ...group.settings.grid, ...(settings.grid ?? {}) },
         bid: { ...base.bid, ...group.settings.bid, ...(settings.bid ?? {}) },
         nerve: { ...base.nerve, ...group.settings.nerve, ...(settings.nerve ?? {}) },
+        fold: { ...base.fold, ...group.settings.fold, ...(settings.fold ?? {}) },
+        season: { ...base.season, ...group.settings.season, ...(settings.season ?? {}) },
+        envelope: { ...base.envelope, ...group.settings.envelope, ...(settings.envelope ?? {}) },
       };
       broadcast({ scope: 'group', id: groupId, event: { type: 'settings_changed' } });
     });

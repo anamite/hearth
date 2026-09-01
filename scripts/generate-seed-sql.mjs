@@ -16,6 +16,8 @@ const jsonb = (o) => `${q(JSON.stringify(o))}::jsonb`;
 
 const fakeArtist = read('content/fake_artist.json');
 const dial = read('content/dial.json');
+const season = read('content/season.json');
+const envelope = read('content/envelope.json');
 
 const rows = [
   ...fakeArtist.map((w) => ({
@@ -29,6 +31,18 @@ const rows = [
     payload: { left: d.left, right: d.right },
     category: d.category ?? null,
     difficulty: d.difficulty ?? 1,
+  })),
+  ...season.map((r) => ({
+    game_type: 'season',
+    payload: { text: r.text },
+    category: r.category ?? null,
+    difficulty: r.difficulty ?? 1,
+  })),
+  ...envelope.map((a) => ({
+    game_type: 'envelope',
+    payload: { text: a.text, points: a.points ?? 3 },
+    category: a.category ?? null,
+    difficulty: a.difficulty ?? 1,
   })),
 ];
 
@@ -47,7 +61,8 @@ const sql = `-- ---------------------------------------------------------------
 -- GENERATED FILE. Do not edit by hand: change content/*.json and run
 --   npm run seed:sql
 --
--- ${fakeArtist.length} Fake Artist words, ${dial.length} Dial spectrum pairs.
+-- ${fakeArtist.length} Fake Artist words, ${dial.length} Dial spectrum pairs,
+-- ${season.length} Season rules, ${envelope.length} Envelope assignments.
 -- Safe to re-run: existing rows are matched on their payload.
 -- ---------------------------------------------------------------
 
@@ -65,5 +80,6 @@ where not exists (
 writeFileSync(join(root, 'supabase/seed.sql'), sql);
 console.log(
   `wrote supabase/seed.sql — ${rows.length} rows ` +
-    `(${fakeArtist.length} fake_artist, ${dial.length} dial)`,
+    `(${fakeArtist.length} fake_artist, ${dial.length} dial, ` +
+    `${season.length} season, ${envelope.length} envelope)`,
 );

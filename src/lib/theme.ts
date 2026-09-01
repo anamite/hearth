@@ -26,6 +26,9 @@ export const GAME_THEMES: Record<GameType, GameTheme> = {
   grid: { accent: '#B9F227', accent2: '#FF7A29', flavour: 'Race' },
   bid: { accent: '#FFC53D', accent2: '#FF3D8B', flavour: 'Duel' },
   nerve: { accent: '#3DDC84', accent2: '#FF4D5E', flavour: 'Dare' },
+  fold: { accent: '#FF4D5E', accent2: '#FFC53D', flavour: 'Push' },
+  season: { accent: '#22D3EE', accent2: '#B9F227', flavour: 'Weather' },
+  envelope: { accent: '#A78BFA', accent2: '#FFC53D', flavour: 'Deal' },
 };
 
 export function gameTheme(id: GameType | null | undefined): GameTheme {

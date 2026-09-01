@@ -22,7 +22,7 @@ const sources = files.map((f) => ({ name: f, sql: readFileSync(join(dir, f), 'ut
 const all = sources.map((s) => s.sql).join('\n');
 
 /** Only our own namespaces; built-ins and Postgres functions are ignored. */
-const OURS = /^(hearth_|game_|fake_artist_|night_village_|dial_|nv_|grid_|bid_|nerve_|my_player_id|is_member)/;
+const OURS = /^(hearth_|game_|fake_artist_|night_village_|dial_|nv_|grid_|bid_|nerve_|fold_|season_|envelope_|my_player_id|is_member)/;
 
 // --- definitions -------------------------------------------------
 const defined = new Map(); // name -> arg count
@@ -69,7 +69,10 @@ for (const m of all.matchAll(grantRe)) {
 }
 
 // --- the dispatchers must cover every game (§10.1) ---------------
-const GAMES = ['fake_artist', 'night_village', 'dial', 'grid', 'bid', 'nerve'];
+const GAMES = [
+  'fake_artist', 'night_village', 'dial', 'grid', 'bid', 'nerve',
+  'fold', 'season', 'envelope',
+];
 const REQUIRED = [
   '_setup', '_public_view', '_private_view', '_action',
   '_advance', '_result', '_has_acted', '_on_left',
@@ -81,7 +84,7 @@ for (const g of GAMES) {
   }
 }
 // role_visible has a default for cooperative games
-for (const g of ['fake_artist', 'night_village']) {
+for (const g of ['fake_artist', 'night_village', 'season', 'envelope']) {
   if (!defined.has(`${g}_role_visible`)) {
     problems.push(`game module ${g} is missing ${g}_role_visible()`);
   }

@@ -71,6 +71,24 @@ function StatsTable({ gameType, rows }: { gameType: GameType; rows: PlayerStats[
                   { head: 'Won', get: (r) => pct(r.games_won, r.games_played), emphasise: true },
                   { head: 'Rounds', get: (r) => String(r.points) },
                 ]
+              : gameType === 'fold'
+              ? [
+                  { head: 'Played', get: (r) => String(r.games_played) },
+                  { head: 'Won', get: (r) => pct(r.games_won, r.games_played), emphasise: true },
+                  { head: 'Cards held', get: (r) => String(r.points) },
+                ]
+              : gameType === 'season'
+              ? [
+                  { head: 'Played', get: (r) => String(r.games_played) },
+                  { head: 'Won', get: (r) => pct(r.games_won, r.games_played), emphasise: true },
+                  { head: 'In the know', get: (r) => String(r.times_hidden) },
+                ]
+              : gameType === 'envelope'
+              ? [
+                  { head: 'Played', get: (r) => String(r.games_played) },
+                  { head: 'Delivered', get: (r) => pct(r.times_hidden, r.games_played), emphasise: true },
+                  { head: 'Points', get: (r) => String(r.points) },
+                ]
               : [
                   { head: 'Played', get: (r) => String(r.games_played) },
                   { head: 'Points', get: (r) => String(r.points), emphasise: true },

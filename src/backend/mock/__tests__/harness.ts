@@ -10,6 +10,9 @@ import { nightVillageServer } from '../games/nightVillage';
 import { gridServer } from '../games/grid';
 import { bidServer } from '../games/bid';
 import { nerveServer } from '../games/nerve';
+import { foldServer } from '../games/fold';
+import { seasonServer } from '../games/season';
+import { envelopeServer } from '../games/envelope';
 
 registerGame(fakeArtistServer);
 registerGame(dialServer);
@@ -17,6 +20,9 @@ registerGame(nightVillageServer);
 registerGame(gridServer);
 registerGame(bidServer);
 registerGame(nerveServer);
+registerGame(foldServer);
+registerGame(seasonServer);
+registerGame(envelopeServer);
 
 let seq = 0;
 const id = () => `id-${++seq}`;
@@ -43,6 +49,9 @@ export class Table {
       grid: { ...DEFAULT_SETTINGS.grid, ...(settings?.grid ?? {}) },
       bid: { ...DEFAULT_SETTINGS.bid, ...(settings?.bid ?? {}) },
       nerve: { ...DEFAULT_SETTINGS.nerve, ...(settings?.nerve ?? {}) },
+      fold: { ...DEFAULT_SETTINGS.fold, ...(settings?.fold ?? {}) },
+      season: { ...DEFAULT_SETTINGS.season, ...(settings?.season ?? {}) },
+      envelope: { ...DEFAULT_SETTINGS.envelope, ...(settings?.envelope ?? {}) },
     };
 
     this.groupId = id();

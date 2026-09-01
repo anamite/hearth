@@ -10,7 +10,10 @@ export type GameType =
   | 'dial'
   | 'grid'
   | 'bid'
-  | 'nerve';
+  | 'nerve'
+  | 'fold'
+  | 'season'
+  | 'envelope';
 
 export type AvatarKey =
   | 'fox' | 'owl' | 'bear' | 'frog' | 'whale'
@@ -89,6 +92,26 @@ export interface NerveSettings {
   turn_seconds: number;
 }
 
+export interface FoldSettings {
+  rounds_per_game: number;
+  hand_size: number;
+  turn_seconds: number;
+  modifiers: boolean;
+}
+
+export interface SeasonSettings {
+  seasons_per_game: number;
+  tricks_per_season: number;
+  secret_seasons: boolean;
+  trick_seconds: number;
+}
+
+export interface EnvelopeSettings {
+  sessions: number;
+  session_seconds: number;
+  brief_seconds: number;
+}
+
 export interface GroupSettings {
   fake_artist: FakeArtistSettings;
   night_village: NightVillageSettings;
@@ -96,6 +119,9 @@ export interface GroupSettings {
   grid: GridSettings;
   bid: BidSettings;
   nerve: NerveSettings;
+  fold: FoldSettings;
+  season: SeasonSettings;
+  envelope: EnvelopeSettings;
   /** player_id of the device that plays narration audio; null = host. */
   audio_speaker_id?: string | null;
 }
@@ -133,6 +159,23 @@ export const DEFAULT_SETTINGS: GroupSettings = {
     wins_needed: 2,
     place_seconds: 30,
     turn_seconds: 45,
+  },
+  fold: {
+    rounds_per_game: 6,
+    hand_size: 5,
+    turn_seconds: 20,
+    modifiers: true,
+  },
+  season: {
+    seasons_per_game: 5,
+    tricks_per_season: 4,
+    secret_seasons: true,
+    trick_seconds: 180,
+  },
+  envelope: {
+    sessions: 3,
+    session_seconds: 240,
+    brief_seconds: 60,
   },
   audio_speaker_id: null,
 };

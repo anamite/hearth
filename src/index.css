@@ -36,6 +36,18 @@
   --accent-rgb: 61 220 132;   /* moss   */
   --accent2-rgb: 255 77 94;   /* blood  */
 }
+[data-game='fold'] {
+  --accent-rgb: 255 77 94;    /* blood  */
+  --accent2-rgb: 255 197 61;  /* gold   */
+}
+[data-game='season'] {
+  --accent-rgb: 34 211 238;   /* lagoon */
+  --accent2-rgb: 185 242 39;  /* lime   */
+}
+[data-game='envelope'] {
+  --accent-rgb: 167 139 250;  /* grape  */
+  --accent2-rgb: 255 197 61;  /* gold   */
+}
 
 @layer base {
   html, body, #root {

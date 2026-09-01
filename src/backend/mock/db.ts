@@ -2,6 +2,8 @@ import type { AvatarKey, GameType, GroupSettings, RoundResult } from '@/types';
 import { DEFAULT_SETTINGS } from '@/types';
 import fakeArtistContent from '../../../content/fake_artist.json';
 import dialContent from '../../../content/dial.json';
+import seasonContent from '../../../content/season.json';
+import envelopeContent from '../../../content/envelope.json';
 
 // ---------------------------------------------------------------
 // Row shapes — deliberately 1:1 with the SQL tables in spec §5 so
@@ -158,6 +160,22 @@ export const CONTENT: ContentItem[] = [
     id: `dial-${i}`,
     game_type: 'dial' as GameType,
     payload: { left: p.left, right: p.right },
+    category: p.category ?? null,
+    difficulty: p.difficulty ?? 1,
+    active: true,
+  })),
+  ...(seasonContent as any[]).map((p, i) => ({
+    id: `season-${i}`,
+    game_type: 'season' as GameType,
+    payload: { text: p.text },
+    category: p.category ?? null,
+    difficulty: p.difficulty ?? 1,
+    active: true,
+  })),
+  ...(envelopeContent as any[]).map((p, i) => ({
+    id: `env-${i}`,
+    game_type: 'envelope' as GameType,
+    payload: { text: p.text, points: p.points ?? 3 },
     category: p.category ?? null,
     difficulty: p.difficulty ?? 1,
     active: true,
