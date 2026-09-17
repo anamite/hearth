@@ -47,9 +47,11 @@ vote_delay_seconds)`."* Implemented as: the round enters `voting` immediately,
 rejects a `vote` submitted before that time. The phase timer is extended so
 there is always a full 90 seconds of actual voting after unlock.
 
-This applies to canvas mode only. Paper mode has no clocks at all: turns wait
-for "Done", `state.voting_open` starts false and flips once a strict majority
-of present players send `ready_to_vote`, and the vote itself has no timer.
+This applies to canvas mode only. Paper mode has no clocks and no turn taps:
+after the reveal it goes straight to `voting` with `state.voting_open` false,
+the screen names `first_player_id` as the starter, the vote opens once a
+strict majority of present players send `ready_to_vote`, and the vote itself
+has no timer (migrations 0017, 0021).
 Canvas mode holds each finished line in `state.pending_stroke` for a 5-second
 confirm/redo window before it joins `strokes` (migration 0017).
 

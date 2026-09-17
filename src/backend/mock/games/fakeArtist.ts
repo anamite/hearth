@@ -142,12 +142,7 @@ function enterDrawingTurn(ctx: GameCtx): void {
     if (ctx.round.state.pass >= strokesPer) return enterVoting(ctx);
     const drawer = currentDrawer(ctx);
     if (drawer && !ctx.hasLeft(drawer.player_id)) {
-      // Paper mode has no turn clock: the drawer taps Done when the line is on paper.
-      const canvas = ctx.settings.fake_artist.canvas_mode;
-      ctx.setPhase('drawing', {
-        seconds: canvas ? TURN_SECONDS : null,
-        pendingOn: [drawer.player_id],
-      });
+      ctx.setPhase('drawing', { seconds: TURN_SECONDS, pendingOn: [drawer.player_id] });
       ctx.round.state.turn_ends_at = ctx.round.phase_ends_at;
       ctx.round.state.pending_stroke = null;
       ctx.round.state.attempt = 0;
@@ -156,6 +151,11 @@ function enterDrawingTurn(ctx: GameCtx): void {
     stepTurn(ctx, n);
   }
   enterVoting(ctx);
+}
+
+/** Paper mode: who starts drawing — the first player in turn order still here. */
+function firstPlayer(ctx: GameCtx): RoundPlayerRow | undefined {
+  return ctx.rps.find((r) => r.turn_index != null && !ctx.hasLeft(r.player_id));
 }
 
 function stepTurn(ctx: GameCtx, n: number): void {
@@ -195,8 +195,8 @@ function enterVoting(ctx: GameCtx): void {
   commitPendingStroke(ctx);
 
   if (!ctx.settings.fake_artist.canvas_mode) {
-    // Paper mode has no clocks at all: the group talks until a majority taps
-    // "Ready to vote", then the vote waits for everyone still here.
+    // Paper mode has no clocks or turn taps: the group draws and talks until a
+    // majority taps "Ready to vote", then the vote waits for everyone still here.
     ctx.round.state.vote_unlock_at = null;
     ctx.round.state.voting_open = false;
     ctx.setPhase('voting', { pendingOn: ctx.livingIds() });
@@ -345,6 +345,8 @@ export const fakeArtistServer: ServerGame = {
           voting_open: s.voting_open !== false,
           ready_count: readyCount(ctx),
           ready_needed: readyNeeded(ctx),
+          first_player_id: firstPlayer(ctx)?.player_id ?? null,
+          passes_total: ctx.settings.fake_artist.strokes_per_player,
           // Individual votes are deliberately absent until the phase ends.
         };
       case 'guess':
@@ -536,7 +538,10 @@ export const fakeArtistServer: ServerGame = {
         // §19.2 — anyone who never tapped is auto-revealed.
         ctx.round.state.pass = 0;
         ctx.round.state.turn = 0;
-        enterDrawingTurn(ctx);
+        // Paper mode draws with no taps at all: the table goes round from the
+        // first player on its own, and the app waits at "Ready to vote".
+        if (!ctx.settings.fake_artist.canvas_mode) enterVoting(ctx);
+        else enterDrawingTurn(ctx);
         return;
       case 'drawing':
         commitPendingStroke(ctx); // an unconfirmed line is final once its window closes

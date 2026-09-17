@@ -148,46 +148,24 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
         <Countdown />
       </div>
 
-      {pub.canvas_mode ? (
-        <>
-          <DrawingCanvas
-            roundId={view.round_id}
-            turnKey={`${pub.pass}:${pub.turn}:${pub.attempt ?? 0}`}
-            strokes={shown}
-            myTurn={myTurn && !busy && !pending}
-            myColor={myColor}
-            onCommit={(points) => submit('stroke', { points, width: 0.008 })}
-          />
-          <p className="mt-3 text-center text-sm text-mute">
-            {pending
-              ? myTurn
-                ? 'Happy with it? It locks in automatically when the timer ends.'
-                : `${current?.nickname ?? 'They'} can still redo that line.`
-              : myTurn
-                ? 'One line. Lift your finger when you’re done.'
-                : 'Watch the line appear.'}
-          </p>
-        </>
-      ) : (
-        <div className="relative flex flex-1 flex-col items-center justify-center gap-5 overflow-hidden rounded-[1.6rem] border-2 border-edge bg-ash/50 p-8 text-center">
-          <div className="dots pointer-events-none absolute inset-0 opacity-50" />
-          <AvatarBadge
-            avatarKey={current?.avatar_key ?? 'fox'}
-            size={76}
-            ring="rgb(var(--accent-rgb))"
-          />
-          <div className="relative">
-            <p className="font-display text-3xl font-extrabold text-chalk">
-              {myTurn ? 'Draw your line' : current?.nickname}
-            </p>
-            <p className="subtitle mt-2">
-              {myTurn
-                ? 'One continuous line on the paper. Then tap Done.'
-                : 'They are drawing on the paper.'}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Only canvas mode reaches this phase; paper mode goes straight to voting. */}
+      <DrawingCanvas
+        roundId={view.round_id}
+        turnKey={`${pub.pass}:${pub.turn}:${pub.attempt ?? 0}`}
+        strokes={shown}
+        myTurn={myTurn && !busy && !pending}
+        myColor={myColor}
+        onCommit={(points) => submit('stroke', { points, width: 0.008 })}
+      />
+      <p className="mt-3 text-center text-sm text-mute">
+        {pending
+          ? myTurn
+            ? 'Happy with it? It locks in automatically when the timer ends.'
+            : `${current?.nickname ?? 'They'} can still redo that line.`
+          : myTurn
+            ? 'One line. Lift your finger when you’re done.'
+            : 'Watch the line appear.'}
+      </p>
 
       <div className="mt-4">
         <PlayerRow
@@ -199,7 +177,7 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
 
       <Spacer />
 
-      {pub.canvas_mode && myTurn && pending && (
+      {myTurn && pending && (
         <div className="flex gap-3">
           <button
             className="btn-ghost flex-1"
@@ -218,15 +196,6 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
         </div>
       )}
 
-      {!pub.canvas_mode && (
-        <button
-          className="btn-primary"
-          disabled={!myTurn || busy}
-          onClick={() => submit('pass_turn')}
-        >
-          {myTurn ? 'Done — next player' : 'Waiting…'}
-        </button>
-      )}
     </div>
   );
 }
@@ -253,6 +222,55 @@ export function VotingScreen({ view, submit, busy }: PhaseProps) {
   const iVoted = open && meActed;
   const iReady = !open && meActed;
 
+  if (!open) {
+    // Paper mode: nobody taps through turns. Say who starts, then everyone
+    // draws and talks until a majority is ready to vote.
+    const first = view.players.find((p) => p.player_id === pub.first_player_id);
+    const iStart = pub.first_player_id === view.me.player_id;
+    const readyIds = new Set(view.players.filter((p) => p.has_acted).map((p) => p.player_id));
+    const passes = pub.passes_total ?? 1;
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-5 overflow-hidden rounded-[1.6rem] border-2 border-edge bg-ash/50 p-8 text-center">
+          <div className="dots pointer-events-none absolute inset-0 opacity-50" />
+          <AvatarBadge
+            avatarKey={first?.avatar_key ?? 'fox'}
+            size={84}
+            ring="rgb(var(--accent-rgb))"
+          />
+          <div className="relative">
+            <p className="label mb-1 text-accent">Draw on paper</p>
+            <p className="font-display text-[2.2rem] font-extrabold leading-none text-chalk">
+              {iStart ? 'You start' : `${first?.nickname ?? 'Someone'} starts`}
+            </p>
+            <p className="subtitle mt-3">
+              One line each, going round the table
+              {passes > 1 ? ` ${passes} times` : ' once'}. Then talk it through.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <PlayerRow players={view.players} activeId={pub.first_player_id} doneIds={readyIds} />
+          <p className="mt-2 text-center text-sm font-semibold text-mute">
+            <span className="text-accent">{pub.ready_count}</span> ready ·{' '}
+            {pub.ready_needed} needed to start voting
+          </p>
+        </div>
+
+        <Spacer />
+
+        <button
+          className={iReady ? 'btn-ghost' : 'btn-primary'}
+          disabled={busy}
+          onClick={() => submit('ready_to_vote')}
+        >
+          {iReady ? 'Not ready yet' : 'Ready to vote'}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-3 flex items-center justify-between">
@@ -261,16 +279,7 @@ export function VotingScreen({ view, submit, busy }: PhaseProps) {
             Who is the Impostor?
           </p>
           <p className="mt-0.5 text-sm font-semibold text-mute">
-            {open ? (
-              <>
-                <span className="text-accent">{pub.votes_cast}</span> of {pub.votes_needed} locked in
-              </>
-            ) : (
-              <>
-                <span className="text-accent">{pub.ready_count}</span> ready ·{' '}
-                {pub.ready_needed} needed to start voting
-              </>
-            )}
+            <span className="text-accent">{pub.votes_cast}</span> of {pub.votes_needed} locked in
           </p>
         </div>
         <Countdown />
@@ -281,34 +290,14 @@ export function VotingScreen({ view, submit, busy }: PhaseProps) {
       <PlayerGrid
         players={view.players}
         selectedId={picked}
-        onSelect={iVoted || locked || !open ? undefined : setPicked}
+        onSelect={iVoted || locked ? undefined : setPicked}
         disabledIds={new Set([view.me.player_id])}
         showActed
       />
 
       <Spacer />
 
-      {!open ? (
-        <div className="space-y-3">
-          <div className="rounded-[1.4rem] border-2 border-edge bg-slatey/60 p-4 text-center">
-            <p className="text-sm font-semibold text-mute">
-              Put the pens down and talk it through.
-            </p>
-            <p className="mt-1 text-sm font-bold text-chalk">
-              {iReady
-                ? `Waiting for ${Math.max(0, pub.ready_needed - pub.ready_count)} more to be ready.`
-                : 'Tap when you’re ready to vote.'}
-            </p>
-          </div>
-          <button
-            className={iReady ? 'btn-ghost w-full' : 'btn-primary w-full'}
-            disabled={busy}
-            onClick={() => submit('ready_to_vote')}
-          >
-            {iReady ? 'Not ready yet' : 'Ready to vote'}
-          </button>
-        </div>
-      ) : locked ? (
+      {locked ? (
         <div className="rounded-[1.4rem] border-2 border-edge bg-slatey/60 p-4 text-center">
           <p className="text-sm font-semibold text-mute">Talk it through first.</p>
           <p className="numeral mt-1 text-2xl text-chalk">

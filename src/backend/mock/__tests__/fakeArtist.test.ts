@@ -306,8 +306,8 @@ describe('Fake Artist — impostor rotation (M2 criterion 3)', () => {
 });
 
 describe('Fake Artist — turn order and strokes', () => {
-  it('gives every player exactly one turn per pass', () => {
-    const t = table(4);
+  it('gives every player exactly one turn per pass (canvas mode)', () => {
+    const t = canvasTable(4);
     t.start('fake_artist');
     revealAll(t);
 
@@ -471,19 +471,35 @@ describe('Fake Artist — ready to vote (paper mode)', () => {
     const t = table(n);
     t.start('fake_artist');
     revealAll(t);
-    let guard = 0;
-    while (t.phase === 'drawing' && guard++ < 100) t.act(drawer(t), 'pass_turn');
     return t;
   }
 
-  it('paper turns have no clock', () => {
-    const t = table(5);
-    t.start('fake_artist');
-    revealAll(t);
-    expect(t.round.phase_ends_at).toBeNull();
-    const cur = drawer(t);
-    t.tick(3600);
-    expect(drawer(t)).toBe(cur);
+  it('skips turn taps: reveal goes straight to ready-to-vote, naming who starts', () => {
+    const t = toVoting(5);
+    expect(t.phase).toBe('voting');
+    const pub = t.view(t.playerIds[0]).public as any;
+    expect(pub.voting_open).toBe(false);
+    expect(pub.passes_total).toBe(2);
+    const first = t.db.round_players.find(
+      (rp) => rp.round_id === t.round.id && rp.turn_index === 0,
+    )!.player_id;
+    expect(pub.first_player_id).toBe(first);
+    expect(() => t.act(first, 'pass_turn')).toThrow(/wrong_phase/);
+  });
+
+  it('names the next player as starter if the first one has left', () => {
+    // Deal until an artist goes first: an impostor leaving ends the round instead.
+    let t = toVoting(6);
+    const firstOf = (x: Table) =>
+      x.db.round_players
+        .filter((rp) => rp.round_id === x.round.id && rp.turn_index != null)
+        .sort((p, q) => p.turn_index! - q.turn_index!);
+    for (let i = 0; i < 50 && firstOf(t)[0].role === 'impostor'; i++) t = toVoting(6);
+    const order = firstOf(t);
+    expect(order[0].role).toBe('artist');
+
+    t.leave(order[0].player_id);
+    expect((t.view(order[1].player_id).public as any).first_player_id).toBe(order[1].player_id);
   });
 
   it('keeps the vote closed, with no clock, until a majority is ready', () => {
@@ -552,8 +568,8 @@ describe('Fake Artist — players leaving (§19.3)', () => {
     expect(t.result.aborted).toBe('impostor_left');
   });
 
-  it('skips an absent artist’s turns and still reaches a result', () => {
-    const t = table(6);
+  it('skips an absent artist’s turns and still reaches a result (canvas mode)', () => {
+    const t = canvasTable(6);
     t.start('fake_artist');
     revealAll(t);
 

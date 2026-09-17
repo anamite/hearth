@@ -16,7 +16,7 @@ const fakeArtist: GameModule = {
       key: 'canvas_mode',
       type: 'toggle',
       label: 'Draw on the phone',
-      help: 'Off means paper and pens — less screen time, and the recommended way to start. Paper rounds have no timers: voting starts once most of the group taps Ready.',
+      help: 'Off means paper and pens — less screen time, and the recommended way to start. On paper there are no timers or turn taps: the app says who starts, and voting opens once most of the group taps Ready.',
     },
     {
       key: 'strokes_per_player',
