@@ -1,12 +1,19 @@
 import type { AvatarKey } from '@/types';
 
-/** Spec §16.1 — exactly 24, fixed, because narration audio needs one clip per name. */
+/**
+ * Spec §16.1 — the quick-pick names. Narration has a recorded clip for each;
+ * a player may also type their own name, which the narrator simply skips.
+ */
 export const NICKNAME_POOL = [
   'Baker', 'Miller', 'Fletcher', 'Mason', 'Cooper', 'Sawyer',
   'Fox', 'Wren', 'Pike', 'Crow', 'Hare', 'Moth',
   'Ash', 'Birch', 'Cove', 'Fern', 'Reed', 'Vale',
   'Ember', 'Frost', 'Dusk', 'Flint', 'Slate', 'Wick',
 ] as const;
+
+/** Length limits for a typed name, in characters. */
+export const NICKNAME_MIN = 2;
+export const NICKNAME_MAX = 15;
 
 /** Spec §16.2 — 10 avatars; the colour doubles as the player's stroke colour. */
 export const AVATARS: { key: AvatarKey; color: string; label: string }[] = [

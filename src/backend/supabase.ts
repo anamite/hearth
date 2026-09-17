@@ -10,7 +10,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from './env';
 const KNOWN_CODES = new Set<ErrorCode>([
   'not_a_member', 'wrong_phase', 'not_your_turn', 'already_acted', 'invalid_target',
   'not_host', 'too_few_players', 'too_many_players', 'bad_pin', 'group_not_found',
-  'group_full', 'nickname_taken', 'content_exhausted', 'rate_limited',
+  'group_full', 'nickname_taken', 'bad_nickname', 'content_exhausted', 'rate_limited',
   'round_not_found', 'round_active', 'no_active_round',
 ]);
 

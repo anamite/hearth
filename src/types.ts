@@ -33,6 +33,7 @@ export type ErrorCode =
   | 'group_not_found'
   | 'group_full'
   | 'nickname_taken'
+  | 'bad_nickname'
   | 'content_exhausted'
   | 'rate_limited'
   | 'round_not_found'

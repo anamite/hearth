@@ -5,6 +5,7 @@ import type {
 import { HearthError } from '@/types';
 import { uuid } from '@/lib/random';
 import { CODE_ALPHABET, CODE_LENGTH, GROUP_MAX_PLAYERS, GROUP_NAME_ADJECTIVES, GROUP_NAME_NOUNS, GROUP_TTL_DAYS, NICKNAME_POOL } from '@/lib/constants';
+import { cleanNickname } from '@/lib/text';
 import type { Backend } from '../types';
 import {
   beginTxBuffer, broadcast, compareAndSwap, defaultSettings, discardTxBuffer,
@@ -127,7 +128,7 @@ export class MockBackend implements Backend {
     pin: string; nickname: string; avatarKey: AvatarKey; turnstileToken: string;
   }) {
     validatePin(a.pin);
-    validateNickname(a.nickname);
+    const nickname = validateNickname(a.nickname);
 
     return this.tx((db) => {
       const group: GroupRow = {
@@ -146,7 +147,7 @@ export class MockBackend implements Backend {
         id: uuid(),
         group_id: group.id,
         auth_uid: this.authUid(),
-        nickname: a.nickname,
+        nickname,
         avatar_key: a.avatarKey,
         is_host: true,
         is_ready: true,
@@ -191,9 +192,9 @@ export class MockBackend implements Backend {
       const active = db.players.filter((p) => p.group_id === group.id && !p.has_left);
       if (active.length >= GROUP_MAX_PLAYERS) throw new HearthError('group_full');
 
-      validateNickname(a.nickname);
+      const nickname = validateNickname(a.nickname);
       const taken = db.players.some(
-        (p) => p.group_id === group.id && p.nickname === a.nickname,
+        (p) => p.group_id === group.id && p.nickname.toLowerCase() === nickname.toLowerCase(),
       );
       if (taken) throw new HearthError('nickname_taken');
 
@@ -201,7 +202,7 @@ export class MockBackend implements Backend {
         id: uuid(),
         group_id: group.id,
         auth_uid: this.authUid(),
-        nickname: a.nickname,
+        nickname,
         avatar_key: a.avatarKey,
         is_host: false,
         is_ready: false,
@@ -250,8 +251,10 @@ export class MockBackend implements Backend {
     const db = loadDb();
     const group = db.groups.find((x) => x.code.toUpperCase() === code.trim().toUpperCase());
     if (!group) return [...NICKNAME_POOL];
-    const used = new Set(db.players.filter((p) => p.group_id === group.id).map((p) => p.nickname));
-    return NICKNAME_POOL.filter((n) => !used.has(n));
+    const used = new Set(
+      db.players.filter((p) => p.group_id === group.id).map((p) => p.nickname.toLowerCase()),
+    );
+    return NICKNAME_POOL.filter((n) => !used.has(n.toLowerCase()));
   }
 
   async peekGroup(code: string) {
@@ -582,8 +585,8 @@ function validatePin(pin: string): void {
   if (!/^\d{4,6}$/.test(pin)) throw new HearthError('bad_pin', 'PIN must be 4–6 digits');
 }
 
-function validateNickname(nickname: string): void {
-  if (!(NICKNAME_POOL as readonly string[]).includes(nickname)) {
-    throw new HearthError('nickname_taken', 'unknown nickname');
-  }
+function validateNickname(nickname: string): string {
+  const clean = cleanNickname(String(nickname ?? ''));
+  if (!clean) throw new HearthError('bad_nickname');
+  return clean;
 }

@@ -1,9 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AvatarKey } from '@/types';
-import { AVATARS, NICKNAME_POOL } from '@/lib/constants';
+import { AVATARS, NICKNAME_MAX, NICKNAME_MIN, NICKNAME_POOL } from '@/lib/constants';
+import { cleanNickname } from '@/lib/text';
 import { Avatar } from './Avatar';
 import { IS_MOCK } from '@/backend';
 
+/**
+ * Type any name, or tap a quick pick to fill the box. `onChange` receives the
+ * cleaned name, or null while what's typed isn't usable yet.
+ */
 export function NicknamePicker({
   value,
   available,
@@ -11,13 +16,48 @@ export function NicknamePicker({
 }: {
   value: string | null;
   available: string[] | null;
-  onChange: (name: string) => void;
+  onChange: (name: string | null) => void;
 }) {
   const free = new Set(available ?? NICKNAME_POOL);
+  const [text, setText] = useState(value ?? '');
+
+  const update = (next: string) => {
+    setText(next);
+    const clean = cleanNickname(next);
+    // A quick-pick name already in this group is known to be taken up front;
+    // a typed duplicate is caught by the server on join.
+    const takenPick = clean != null && (NICKNAME_POOL as readonly string[]).includes(clean) && !free.has(clean);
+    onChange(clean && !takenPick ? clean : null);
+  };
+
+  const trimmed = text.trim();
+  const length = [...trimmed].length;
+  const clean = cleanNickname(text);
+  let hint = `${length}/${NICKNAME_MAX}`;
+  if (trimmed && length < NICKNAME_MIN) hint = `At least ${NICKNAME_MIN} characters`;
+  else if (length > NICKNAME_MAX) hint = `Too long — ${NICKNAME_MAX} characters max`;
+  else if (trimmed && !clean) hint = 'That name has characters we can’t use';
+  else if (clean && !free.has(clean) && (NICKNAME_POOL as readonly string[]).includes(clean)) {
+    hint = 'Someone in this group already has that name';
+  }
+  const problem = hint !== `${length}/${NICKNAME_MAX}`;
 
   return (
     <div>
-      <label className="label">Pick a name</label>
+      <label className="label" htmlFor="nickname">Your name</label>
+      <input
+        id="nickname"
+        className="field"
+        placeholder="Type your name"
+        autoComplete="off"
+        autoCapitalize="words"
+        maxLength={NICKNAME_MAX + 10}
+        value={text}
+        onChange={(e) => update(e.target.value)}
+      />
+      <p className={`mt-1.5 text-right text-xs ${problem ? 'text-blood' : 'text-mute'}`}>{hint}</p>
+
+      <p className="label mt-3">Or pick one</p>
       <div className="grid grid-cols-3 gap-2">
         {NICKNAME_POOL.map((name) => {
           const taken = !free.has(name);
@@ -26,7 +66,7 @@ export function NicknamePicker({
               key={name}
               type="button"
               disabled={taken}
-              onClick={() => onChange(name)}
+              onClick={() => update(name)}
               className={`rounded-xl border-2 px-2 py-2.5 text-sm font-bold transition-all duration-100
                 ${
                   value === name
@@ -45,7 +85,7 @@ export function NicknamePicker({
         })}
       </div>
       <p className="mt-2 text-xs text-mute">
-        Fixed names — the narrator has a recording for each one.
+        The narrator can say these names out loud. It skips names you type yourself.
       </p>
     </div>
   );
