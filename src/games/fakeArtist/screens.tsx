@@ -130,6 +130,10 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
     view.players.filter((p) => p.has_acted).map((p) => p.player_id),
   );
 
+  // Canvas mode: a finished line sits in a short redo window before it is final.
+  const pending = pub.pending_stroke as StrokeData | null;
+  const shown = pending ? [...strokesOf(view), pending] : strokesOf(view);
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-3 flex items-center justify-between">
@@ -148,16 +152,20 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
         <>
           <DrawingCanvas
             roundId={view.round_id}
-            turnKey={`${pub.pass}:${pub.turn}`}
-            strokes={strokesOf(view)}
-            myTurn={myTurn && !busy}
+            turnKey={`${pub.pass}:${pub.turn}:${pub.attempt ?? 0}`}
+            strokes={shown}
+            myTurn={myTurn && !busy && !pending}
             myColor={myColor}
             onCommit={(points) => submit('stroke', { points, width: 0.008 })}
           />
           <p className="mt-3 text-center text-sm text-mute">
-            {myTurn
-              ? 'One line. Lifting your finger ends your turn.'
-              : 'Watch the line appear.'}
+            {pending
+              ? myTurn
+                ? 'Happy with it? It locks in automatically when the timer ends.'
+                : `${current?.nickname ?? 'They'} can still redo that line.`
+              : myTurn
+                ? 'One line. Lift your finger when you’re done.'
+                : 'Watch the line appear.'}
           </p>
         </>
       ) : (
@@ -191,6 +199,25 @@ export function DrawingScreen({ view, submit, busy }: PhaseProps) {
 
       <Spacer />
 
+      {pub.canvas_mode && myTurn && pending && (
+        <div className="flex gap-3">
+          <button
+            className="btn-ghost flex-1"
+            disabled={busy}
+            onClick={() => submit('redo_stroke')}
+          >
+            Redo
+          </button>
+          <button
+            className="btn-primary flex-1"
+            disabled={busy}
+            onClick={() => submit('confirm_stroke')}
+          >
+            Confirm
+          </button>
+        </div>
+      )}
+
       {!pub.canvas_mode && (
         <button
           className="btn-primary"
@@ -217,9 +244,14 @@ export function VotingScreen({ view, submit, busy }: PhaseProps) {
     ? Date.parse(pub.vote_unlock_at) - (Date.now() + offset)
     : 0;
   const locked = unlockMs > 0;
-  const iVoted = view.me.player_id
+  // Paper mode: the vote stays shut until a majority taps "Ready to vote".
+  // Until then `has_acted` means "ready", afterwards it means "voted".
+  const open = pub.voting_open !== false;
+  const meActed = view.me.player_id
     ? view.players.find((p) => p.player_id === view.me.player_id)?.has_acted
     : false;
+  const iVoted = open && meActed;
+  const iReady = !open && meActed;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -229,7 +261,16 @@ export function VotingScreen({ view, submit, busy }: PhaseProps) {
             Who is the Impostor?
           </p>
           <p className="mt-0.5 text-sm font-semibold text-mute">
-            <span className="text-accent">{pub.votes_cast}</span> of {pub.votes_needed} locked in
+            {open ? (
+              <>
+                <span className="text-accent">{pub.votes_cast}</span> of {pub.votes_needed} locked in
+              </>
+            ) : (
+              <>
+                <span className="text-accent">{pub.ready_count}</span> ready ·{' '}
+                {pub.ready_needed} needed to start voting
+              </>
+            )}
           </p>
         </div>
         <Countdown />
@@ -240,14 +281,34 @@ export function VotingScreen({ view, submit, busy }: PhaseProps) {
       <PlayerGrid
         players={view.players}
         selectedId={picked}
-        onSelect={iVoted || locked ? undefined : setPicked}
+        onSelect={iVoted || locked || !open ? undefined : setPicked}
         disabledIds={new Set([view.me.player_id])}
         showActed
       />
 
       <Spacer />
 
-      {locked ? (
+      {!open ? (
+        <div className="space-y-3">
+          <div className="rounded-[1.4rem] border-2 border-edge bg-slatey/60 p-4 text-center">
+            <p className="text-sm font-semibold text-mute">
+              Put the pens down and talk it through.
+            </p>
+            <p className="mt-1 text-sm font-bold text-chalk">
+              {iReady
+                ? `Waiting for ${Math.max(0, pub.ready_needed - pub.ready_count)} more to be ready.`
+                : 'Tap when you’re ready to vote.'}
+            </p>
+          </div>
+          <button
+            className={iReady ? 'btn-ghost w-full' : 'btn-primary w-full'}
+            disabled={busy}
+            onClick={() => submit('ready_to_vote')}
+          >
+            {iReady ? 'Not ready yet' : 'Ready to vote'}
+          </button>
+        </div>
+      ) : locked ? (
         <div className="rounded-[1.4rem] border-2 border-edge bg-slatey/60 p-4 text-center">
           <p className="text-sm font-semibold text-mute">Talk it through first.</p>
           <p className="numeral mt-1 text-2xl text-chalk">

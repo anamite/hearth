@@ -47,6 +47,12 @@ vote_delay_seconds)`."* Implemented as: the round enters `voting` immediately,
 rejects a `vote` submitted before that time. The phase timer is extended so
 there is always a full 90 seconds of actual voting after unlock.
 
+This applies to canvas mode only. Paper mode has no clocks at all: turns wait
+for "Done", `state.voting_open` starts false and flips once a strict majority
+of present players send `ready_to_vote`, and the vote itself has no timer.
+Canvas mode holds each finished line in `state.pending_stroke` for a 5-second
+confirm/redo window before it joins `strokes` (migration 0017).
+
 ### 5. Dial's live dial is persisted, not purely broadcast
 
 Spec §13.5 says a timed-out `guess` should use "the dial's last-broadcast

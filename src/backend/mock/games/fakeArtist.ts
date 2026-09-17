@@ -19,6 +19,10 @@ const MAX_REROLLS = 3;
 const REVEAL_SAFETY_SECONDS = 180;
 const TURN_SECONDS = 45;
 const VOTING_SECONDS = 90;
+/** Canvas mode: how long the drawer has to redo a line before it is final. */
+const CONFIRM_SECONDS = 5;
+/** Canvas mode: a redo never leaves the drawer with less than this. */
+const REDO_MIN_SECONDS = 10;
 
 /**
  * NOTE ON THE ACTION KEY (deviation from spec §5's unique constraint):
@@ -138,7 +142,15 @@ function enterDrawingTurn(ctx: GameCtx): void {
     if (ctx.round.state.pass >= strokesPer) return enterVoting(ctx);
     const drawer = currentDrawer(ctx);
     if (drawer && !ctx.hasLeft(drawer.player_id)) {
-      ctx.setPhase('drawing', { seconds: TURN_SECONDS, pendingOn: [drawer.player_id] });
+      // Paper mode has no turn clock: the drawer taps Done when the line is on paper.
+      const canvas = ctx.settings.fake_artist.canvas_mode;
+      ctx.setPhase('drawing', {
+        seconds: canvas ? TURN_SECONDS : null,
+        pendingOn: [drawer.player_id],
+      });
+      ctx.round.state.turn_ends_at = ctx.round.phase_ends_at;
+      ctx.round.state.pending_stroke = null;
+      ctx.round.state.attempt = 0;
       return;
     }
     stepTurn(ctx, n);
@@ -154,7 +166,44 @@ function stepTurn(ctx: GameCtx, n: number): void {
   }
 }
 
+/** Canvas mode: a line waiting out its redo window becomes part of the picture. */
+function commitPendingStroke(ctx: GameCtx): void {
+  const s = ctx.round.state;
+  if (!s.pending_stroke) return;
+  s.strokes = [...(s.strokes ?? []), s.pending_stroke];
+  s.pending_stroke = null;
+}
+
+function readyCount(ctx: GameCtx): number {
+  return ctx
+    .actionsIn('voting', 'ready_to_vote')
+    .filter((a) => !ctx.hasLeft(a.player_id)).length;
+}
+
+function readyNeeded(ctx: GameCtx): number {
+  return Math.floor(ctx.present().length / 2) + 1;
+}
+
+/** Paper mode: once a strict majority is ready, the vote opens for everyone. */
+function openVoteIfReady(ctx: GameCtx): void {
+  const s = ctx.round.state;
+  if (s.voting_open !== false || readyCount(ctx) < readyNeeded(ctx)) return;
+  s.voting_open = true;
+}
+
 function enterVoting(ctx: GameCtx): void {
+  commitPendingStroke(ctx);
+
+  if (!ctx.settings.fake_artist.canvas_mode) {
+    // Paper mode has no clocks at all: the group talks until a majority taps
+    // "Ready to vote", then the vote waits for everyone still here.
+    ctx.round.state.vote_unlock_at = null;
+    ctx.round.state.voting_open = false;
+    ctx.setPhase('voting', { pendingOn: ctx.livingIds() });
+    return;
+  }
+
+  ctx.round.state.voting_open = true;
   // §11.4 — a paper-mode round can otherwise reach the vote in seconds.
   const unlockAt = Math.max(
     ctx.now.getTime(),
@@ -282,6 +331,9 @@ export const fakeArtistServer: ServerGame = {
           current_player_id: currentDrawer(ctx)?.player_id ?? null,
           canvas_mode: ctx.settings.fake_artist.canvas_mode,
           strokes,
+          pending_stroke: s.pending_stroke ?? null,
+          attempt: s.attempt ?? 0,
+          confirm_seconds: CONFIRM_SECONDS,
         };
       case 'voting':
         return {
@@ -290,6 +342,9 @@ export const fakeArtistServer: ServerGame = {
           votes_cast: new Set(ctx.actionsIn('voting', 'vote').map((a) => a.player_id)).size,
           votes_needed: ctx.livingIds().length,
           vote_unlock_at: s.vote_unlock_at ?? null,
+          voting_open: s.voting_open !== false,
+          ready_count: readyCount(ctx),
+          ready_needed: readyNeeded(ctx),
           // Individual votes are deliberately absent until the phase ends.
         };
       case 'guess':
@@ -336,7 +391,10 @@ export const fakeArtistServer: ServerGame = {
           !!ctx.actionBy('drawing', passKind(s.pass), rp.player_id)
         );
       case 'voting':
-        return !!ctx.actionBy('voting', 'vote', rp.player_id);
+        // Before a paper-mode vote opens, "acted" means "ready to vote".
+        return s.voting_open !== false
+          ? !!ctx.actionBy('voting', 'vote', rp.player_id)
+          : !!ctx.actionBy('voting', 'ready_to_vote', rp.player_id);
       case 'guess':
         return !!ctx.actionBy('guess', 'word_guess', rp.player_id);
       default:
@@ -385,6 +443,7 @@ export const fakeArtistServer: ServerGame = {
 
       if (kind === 'stroke') {
         if (!ctx.settings.fake_artist.canvas_mode) throw new HearthError('wrong_phase');
+        if (s.pending_stroke) throw new HearthError('wrong_phase');
         const raw = Array.isArray(payload.points) ? payload.points : [];
         const points = raw
           .slice(0, MAX_POINTS_PER_STROKE)
@@ -401,19 +460,55 @@ export const fakeArtistServer: ServerGame = {
           width: clampWidth(Number(payload.width)),
         };
         ctx.putAction(rp.player_id, strokeKind(s.pass), { count: points.length });
-        s.strokes = [...(s.strokes ?? []), stroke];
-        ctx.clearPending(rp.player_id);
+        // Held back for a short redo window; the turn stays pending on the
+        // drawer, so the clock (or a confirm) is what moves it on.
+        s.pending_stroke = stroke;
+        ctx.round.phase_ends_at = new Date(
+          ctx.now.getTime() + CONFIRM_SECONDS * 1000,
+        ).toISOString();
+        return;
+      }
+
+      if (kind === 'confirm_stroke') {
+        if (!s.pending_stroke) throw new HearthError('wrong_phase');
+        ctx.clearPending(rp.player_id); // advance commits it
+        return;
+      }
+
+      if (kind === 'redo_stroke') {
+        if (!s.pending_stroke) throw new HearthError('wrong_phase');
+        s.pending_stroke = null;
+        s.attempt = (s.attempt ?? 0) + 1;
+        ctx.dropAction(rp.player_id, strokeKind(s.pass));
+        const turnEnds = s.turn_ends_at ? Date.parse(s.turn_ends_at) : 0;
+        ctx.round.phase_ends_at = new Date(
+          Math.max(turnEnds, ctx.now.getTime() + REDO_MIN_SECONDS * 1000),
+        ).toISOString();
         return;
       }
 
       if (kind === 'pass_turn') {
+        if (s.pending_stroke) throw new HearthError('wrong_phase');
         ctx.putAction(rp.player_id, passKind(s.pass), {});
         ctx.clearPending(rp.player_id);
         return;
       }
     }
 
+    if (phase === 'voting' && kind === 'ready_to_vote') {
+      if (s.voting_open !== false) throw new HearthError('wrong_phase');
+      // Toggle, like a reroll request: tapping again takes it back.
+      if (ctx.actionBy('voting', 'ready_to_vote', rp.player_id)) {
+        ctx.dropAction(rp.player_id, 'ready_to_vote');
+        return;
+      }
+      ctx.putAction(rp.player_id, 'ready_to_vote', {});
+      openVoteIfReady(ctx);
+      return;
+    }
+
     if (phase === 'voting' && kind === 'vote') {
+      if (s.voting_open === false) throw new HearthError('wrong_phase');
       const unlock = s.vote_unlock_at ? Date.parse(s.vote_unlock_at) : 0;
       if (ctx.now.getTime() < unlock) throw new HearthError('wrong_phase');
       const target = payload.target_id as string;
@@ -444,6 +539,7 @@ export const fakeArtistServer: ServerGame = {
         enterDrawingTurn(ctx);
         return;
       case 'drawing':
+        commitPendingStroke(ctx); // an unconfirmed line is final once its window closes
         stepTurn(ctx, n); // a timed-out turn simply records no stroke
         enterDrawingTurn(ctx);
         return;
@@ -472,6 +568,8 @@ export const fakeArtistServer: ServerGame = {
       return;
     }
     // Their remaining turns are skipped by enterDrawingTurn's absence check.
+    // One fewer player can also be what tips a paper-mode ready majority.
+    if (ctx.round.phase === 'voting') openVoteIfReady(ctx);
   },
 
   applyStats(ctx, result) {

@@ -19,13 +19,29 @@ function revealAll(t: Table) {
   for (const p of t.playerIds) t.act(p, 'revealed');
 }
 
+/** Draws every turn, then (paper mode) readies everyone so the vote opens. */
 function drawEverything(t: Table) {
   let guard = 0;
   while (t.phase === 'drawing' && guard++ < 100) {
     const cur = (t.view(t.playerIds[0]).public as any).current_player_id as string;
     t.act(cur, 'pass_turn');
   }
+  readyUp(t);
 }
+
+function readyUp(t: Table) {
+  for (const p of t.playerIds) {
+    if (t.phase !== 'voting' || (t.view(p).public as any).voting_open) return;
+    t.act(p, 'ready_to_vote');
+  }
+}
+
+function canvasTable(n = 4, extra: Record<string, unknown> = {}) {
+  return table(n, { canvas_mode: true, ...extra });
+}
+
+const LINE = { points: [[0.1, 0.1], [0.2, 0.2]], width: 0.008 };
+const drawer = (t: Table) => (t.view(t.playerIds[0]).public as any).current_player_id as string;
 
 describe('Fake Artist — setup', () => {
   it('assigns exactly one impostor and gives everyone else the word', () => {
@@ -166,8 +182,8 @@ describe('Fake Artist — voting and outcomes', () => {
     expect(t.result.reason).toBe('impostor_escaped');
   });
 
-  it('counts non-voters as abstentions rather than stalling', () => {
-    const t = table(5);
+  it('counts non-voters as abstentions when the canvas-mode vote times out', () => {
+    const t = canvasTable(5);
     t.start('fake_artist');
     revealAll(t);
     drawEverything(t);
@@ -197,11 +213,11 @@ describe('Fake Artist — voting and outcomes', () => {
   });
 });
 
-describe('Fake Artist — vote delay', () => {
+describe('Fake Artist — vote delay (canvas mode)', () => {
   it('refuses votes until the delay has elapsed', () => {
     const t = new Table(5, {
       fake_artist: {
-        strokes_per_player: 1, canvas_mode: false, vote_delay_seconds: 60,
+        strokes_per_player: 1, canvas_mode: true, vote_delay_seconds: 60,
         allow_reroll: true, impostor_guess_seconds: 15,
       } as any,
     });
@@ -324,6 +340,7 @@ describe('Fake Artist — turn order and strokes', () => {
     ).toThrow(/not_your_turn/);
 
     t.act(cur, 'stroke', { points: [[0.1, 0.1], [0.2, 0.2]], width: 0.008 });
+    t.act(cur, 'confirm_stroke');
     expect((t.view(other).public as any).strokes).toHaveLength(1);
   });
 
@@ -340,6 +357,7 @@ describe('Fake Artist — turn order and strokes', () => {
     const cur = (t.view(t.playerIds[0]).public as any).current_player_id as string;
     const points = Array.from({ length: 900 }, (_, i) => [i / 900, 5 - i]);
     t.act(cur, 'stroke', { points, width: 99 });
+    t.act(cur, 'confirm_stroke');
 
     const stroke = (t.view(cur).public as any).strokes[0];
     expect(stroke.points.length).toBe(400);
@@ -350,6 +368,178 @@ describe('Fake Artist — turn order and strokes', () => {
       expect(y).toBeGreaterThanOrEqual(0);
       expect(y).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('Fake Artist — confirm or redo a line (canvas mode)', () => {
+  it('holds a line back until the drawer confirms, then moves on', () => {
+    const t = canvasTable();
+    t.start('fake_artist');
+    revealAll(t);
+    const cur = drawer(t);
+
+    t.act(cur, 'stroke', LINE);
+    let pub = t.view(t.playerIds[0]).public as any;
+    expect(t.phase).toBe('drawing');
+    expect(pub.current_player_id).toBe(cur);
+    expect(pub.strokes).toHaveLength(0);
+    expect(pub.pending_stroke.points).toHaveLength(2);
+    expect(Date.parse(t.round.phase_ends_at!) - t.clock.getTime()).toBe(5000);
+
+    t.act(cur, 'confirm_stroke');
+    pub = t.view(t.playerIds[0]).public as any;
+    expect(pub.strokes).toHaveLength(1);
+    expect(pub.pending_stroke).toBeNull();
+    expect(pub.current_player_id).not.toBe(cur);
+  });
+
+  it('keeps the line and moves on when the 5 seconds run out', () => {
+    const t = canvasTable();
+    t.start('fake_artist');
+    revealAll(t);
+    const cur = drawer(t);
+
+    t.act(cur, 'stroke', LINE);
+    t.tick(4);
+    expect(drawer(t)).toBe(cur);
+    t.tick(2);
+    expect(drawer(t)).not.toBe(cur);
+    expect((t.view(cur).public as any).strokes).toHaveLength(1);
+  });
+
+  it('lets the drawer redo, then draw again on the same turn', () => {
+    const t = canvasTable();
+    t.start('fake_artist');
+    revealAll(t);
+    const cur = drawer(t);
+
+    t.act(cur, 'stroke', LINE);
+    t.act(cur, 'redo_stroke');
+    let pub = t.view(cur).public as any;
+    expect(pub.pending_stroke).toBeNull();
+    expect(pub.attempt).toBe(1);
+    expect(pub.current_player_id).toBe(cur);
+    expect(t.view(cur).players.find((p) => p.player_id === cur)!.has_acted).toBe(false);
+
+    t.act(cur, 'stroke', { points: [[0.5, 0.5], [0.9, 0.9]], width: 0.008 });
+    t.act(cur, 'confirm_stroke');
+    pub = t.view(cur).public as any;
+    expect(pub.strokes).toHaveLength(1);
+    expect(pub.strokes[0].points[0]).toEqual([0.5, 0.5]);
+  });
+
+  it('refuses a second line, a pass, or a redo outside the window', () => {
+    const t = canvasTable();
+    t.start('fake_artist');
+    revealAll(t);
+    const cur = drawer(t);
+
+    expect(() => t.act(cur, 'redo_stroke')).toThrow(/wrong_phase/);
+    expect(() => t.act(cur, 'confirm_stroke')).toThrow(/wrong_phase/);
+    t.act(cur, 'stroke', LINE);
+    expect(() => t.act(cur, 'stroke', LINE)).toThrow(/wrong_phase/);
+    expect(() => t.act(cur, 'pass_turn')).toThrow(/wrong_phase/);
+  });
+
+  it('gives a redo at least 10 seconds even late in the turn', () => {
+    const t = canvasTable();
+    t.start('fake_artist');
+    revealAll(t);
+    const cur = drawer(t);
+
+    t.tick(43);
+    t.act(cur, 'stroke', LINE);
+    t.act(cur, 'redo_stroke');
+    expect(Date.parse(t.round.phase_ends_at!) - t.clock.getTime()).toBe(10000);
+  });
+
+  it('commits the last pending line when drawing ends', () => {
+    const t = canvasTable(4, { strokes_per_player: 1 });
+    t.start('fake_artist');
+    revealAll(t);
+    for (let i = 0; i < 4; i++) {
+      t.act(drawer(t), 'stroke', LINE);
+      t.timeout();
+    }
+    expect(t.phase).toBe('voting');
+    expect((t.view(t.playerIds[0]).public as any).strokes).toHaveLength(4);
+  });
+});
+
+describe('Fake Artist — ready to vote (paper mode)', () => {
+  function toVoting(n = 5) {
+    const t = table(n);
+    t.start('fake_artist');
+    revealAll(t);
+    let guard = 0;
+    while (t.phase === 'drawing' && guard++ < 100) t.act(drawer(t), 'pass_turn');
+    return t;
+  }
+
+  it('paper turns have no clock', () => {
+    const t = table(5);
+    t.start('fake_artist');
+    revealAll(t);
+    expect(t.round.phase_ends_at).toBeNull();
+    const cur = drawer(t);
+    t.tick(3600);
+    expect(drawer(t)).toBe(cur);
+  });
+
+  it('keeps the vote closed, with no clock, until a majority is ready', () => {
+    const t = toVoting(5);
+    expect(t.phase).toBe('voting');
+    expect(t.round.phase_ends_at).toBeNull();
+    let pub = t.view(t.playerIds[0]).public as any;
+    expect(pub.voting_open).toBe(false);
+    expect(pub.ready_needed).toBe(3);
+
+    expect(() => t.act(t.playerIds[0], 'vote', { target_id: t.playerIds[1] })).toThrow(
+      /wrong_phase/,
+    );
+    t.act(t.playerIds[0], 'ready_to_vote');
+    t.act(t.playerIds[1], 'ready_to_vote');
+    t.tick(3600);
+    pub = t.view(t.playerIds[0]).public as any;
+    expect(pub.voting_open).toBe(false);
+    expect(pub.ready_count).toBe(2);
+
+    t.act(t.playerIds[2], 'ready_to_vote');
+    pub = t.view(t.playerIds[0]).public as any;
+    expect(pub.voting_open).toBe(true);
+    expect(() => t.act(t.playerIds[0], 'vote', { target_id: t.playerIds[1] })).not.toThrow();
+    expect(() => t.act(t.playerIds[3], 'ready_to_vote')).toThrow(/wrong_phase/);
+  });
+
+  it('lets a player take back their ready', () => {
+    const t = toVoting(5);
+    t.act(t.playerIds[0], 'ready_to_vote');
+    t.act(t.playerIds[0], 'ready_to_vote');
+    expect((t.view(t.playerIds[0]).public as any).ready_count).toBe(0);
+  });
+
+  it('waits for every vote once open, with no clock', () => {
+    const t = toVoting(5);
+    readyUp(t);
+    const impostor = t.playersWithRole('impostor')[0];
+    const others = t.playerIds.filter((p) => p !== impostor);
+    for (const p of others) t.act(p, 'vote', { target_id: impostor });
+    t.tick(3600);
+    expect(t.phase).toBe('voting');
+    t.act(impostor, 'vote', { target_id: others[0] });
+    expect(t.phase).toBe('guess');
+  });
+
+  it('a player leaving can tip the ready majority', () => {
+    const t = toVoting(6);
+    const impostor = t.playersWithRole('impostor')[0];
+    const others = t.playerIds.filter((p) => p !== impostor);
+    t.act(others[0], 'ready_to_vote');
+    t.act(others[1], 'ready_to_vote');
+    t.act(others[2], 'ready_to_vote');
+    expect((t.view(impostor).public as any).voting_open).toBe(false); // 3 of 6
+    t.leave(others[4]);
+    expect((t.view(impostor).public as any).voting_open).toBe(true); // 3 of 5
   });
 });
 
