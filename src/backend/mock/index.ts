@@ -113,6 +113,18 @@ export class MockBackend implements Backend {
     return db.rounds.find((r) => r.group_id === groupId && !r.ended_at);
   }
 
+  /**
+   * Every group needs a host. The last player out takes the badge with them
+   * (§19.4 has nobody left to promote), so whoever is here longest gets it.
+   */
+  private ensureHost(db: MockDb, groupId: string): void {
+    const present = db.players
+      .filter((p) => p.group_id === groupId && !p.has_left)
+      .sort((a, b) => Date.parse(a.joined_at) - Date.parse(b.joined_at));
+    if (present.length === 0 || present.some((p) => p.is_host)) return;
+    present[0].is_host = true;
+  }
+
   private touch(db: MockDb, groupId: string): void {
     const g = db.groups.find((x) => x.id === groupId);
     if (!g) return;
@@ -180,7 +192,9 @@ export class MockBackend implements Backend {
         // Rejoin path — same device coming back (§7.2).
         existing.has_left = false;
         existing.last_seen_at = nowIso();
+        this.ensureHost(db, group.id);
         this.touch(db, group.id);
+        broadcast({ scope: 'group', id: group.id, event: { type: 'players_changed' } });
         return {
           group_id: group.id,
           code: group.code,
@@ -211,6 +225,7 @@ export class MockBackend implements Backend {
         last_seen_at: nowIso(),
       };
       db.players.push(player);
+      this.ensureHost(db, group.id);
       this.touch(db, group.id);
       broadcast({ scope: 'group', id: group.id, event: { type: 'players_changed' } });
 
