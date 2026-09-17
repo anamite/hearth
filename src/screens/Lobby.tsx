@@ -9,6 +9,7 @@ import { GAMES } from '@/games/manifest';
 import { gameTheme } from '@/lib/theme';
 import { GameCharacter } from '@/components/art';
 import { AvatarBadge } from '@/components/Avatar';
+import { StartGameSheet } from '@/components/StartGameSheet';
 import {
   CodeDisplay, ErrorNote, Loading, Screen, Sticker, TopBar,
 } from '@/components/ui';
@@ -22,6 +23,8 @@ export function LobbyScreen() {
   const [copied, setCopied] = useState(false);
   // Host removal takes two taps: the first arms a player's ✕, the second removes.
   const [armed, setArmed] = useState<string | null>(null);
+  // The game whose start sheet is open, if any.
+  const [confirming, setConfirming] = useState<GameType | null>(null);
 
   useEffect(() => {
     if (!armed) return;
@@ -104,10 +107,15 @@ export function LobbyScreen() {
     }
   }
 
-  async function start(gameType: GameType) {
+  const confirmingGame = GAMES.find((g) => g.id === confirming);
+
+  async function start(gameType: GameType, changed: Record<string, unknown> | null) {
     setBusy(true);
     setError(null);
     try {
+      if (changed) {
+        await getBackend().updateGroupSettings(lobby!.group.id, { [gameType]: changed } as any);
+      }
       await getBackend().startRound(lobby!.group.id, gameType);
       navigate(`/g/${code}/play`);
     } catch (err) {
@@ -219,7 +227,10 @@ export function LobbyScreen() {
               data-game={g.id}
               data-flip-id={g.id}
               disabled={blocked || !me.is_host || busy}
-              onClick={() => start(g.id)}
+              onClick={() => {
+                setError(null);
+                setConfirming(g.id);
+              }}
               className={`relative w-full overflow-hidden rounded-[1.5rem] border-2 p-4 pl-[4.6rem] text-left
                 transition-all duration-100
                 ${
@@ -296,6 +307,17 @@ export function LobbyScreen() {
           </div>
         </div>
       </div>
+
+      {confirmingGame && (
+        <StartGameSheet
+          game={confirmingGame}
+          settings={lobby.group.settings}
+          busy={busy}
+          error={error}
+          onCancel={() => setConfirming(null)}
+          onStart={(changed) => void start(confirmingGame.id, changed)}
+        />
+      )}
     </Screen>
   );
 }
