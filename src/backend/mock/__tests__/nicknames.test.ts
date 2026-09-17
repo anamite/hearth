@@ -25,9 +25,9 @@ describe('custom nicknames', () => {
   });
 
   it('rejects control and invisible characters', () => {
-    expect(cleanNickname('Bak​er')).toBeNull();
-    expect(cleanNickname('Bak‮er')).toBeNull();
-    expect(cleanNickname('Baker')).toBeNull();
+    expect(cleanNickname('Bak\u200Ber')).toBeNull();
+    expect(cleanNickname('Bak\u202Eer')).toBeNull();
+    expect(cleanNickname('Bak\u0007er')).toBeNull();
   });
 
   it('snaps a quick-pick name to the pool spelling so narration still works', () => {

@@ -34,7 +34,7 @@ export function cleanNickname(input: string): string | null {
   const length = [...name].length;
   if (length < NICKNAME_MIN || length > NICKNAME_MAX) return null;
   // The zero-width joiner is allowed because emoji sequences need it.
-  if (/[\p{Cc}\p{Cf}]/u.test(name.replace(/‍/g, ''))) return null;
+  if (/[\p{Cc}\p{Cf}]/u.test(name.replace(/\u200D/g, ''))) return null;
   const pooled = NICKNAME_POOL.find((n) => n.toLowerCase() === name.toLowerCase());
   return pooled ?? name;
 }

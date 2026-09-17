@@ -10,6 +10,8 @@
 -- group regardless of case. Narration skips names it has no clip for.
 --
 -- A forward migration because 0004 has already been applied.
+-- NOTE: create_group and join_group below need `extensions` on their search
+-- path for pgcrypto; 0019 adds it. Keep that if you redefine them again.
 -- ---------------------------------------------------------------
 
 /** The cleaned name, or null if it breaks the rules. */
@@ -20,7 +22,7 @@ begin
   v := trim(regexp_replace(normalize(coalesce(p_nickname, ''), NFC), '\s+', ' ', 'g'));
   if char_length(v) < 2 or char_length(v) > 15 then return null; end if;
   -- Zero-width joiner (U+200D) stays allowed: emoji sequences need it.
-  if v ~ '[\x01-\x1F\x7F-\x9F­؜᠎​‌‎‏‪-‮⁠-⁤﻿￹-￻]' then
+  if v ~ '[\x01-\x1F\x7F-\x9F\u00AD\u061C\u180E\u200B\u200C\u200E\u200F\u202A-\u202E\u2060-\u2064\uFEFF\uFFF9-\uFFFB]' then
     return null;
   end if;
   select n into v_pool from unnest(hearth_nickname_pool()) as n where lower(n) = lower(v);
