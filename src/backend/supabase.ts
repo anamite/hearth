@@ -112,6 +112,10 @@ export class SupabaseBackend implements Backend {
     return this.rpc('leave_group', { p_group_id: groupId });
   }
 
+  removePlayer(groupId: string, playerId: string): Promise<void> {
+    return this.rpc('remove_player', { p_group_id: groupId, p_player_id: playerId });
+  }
+
   setReady(groupId: string, ready: boolean): Promise<void> {
     return this.rpc('set_ready', { p_group_id: groupId, p_ready: ready });
   }

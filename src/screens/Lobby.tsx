@@ -20,6 +20,14 @@ export function LobbyScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Host removal takes two taps: the first arms a player's ✕, the second removes.
+  const [armed, setArmed] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(null), 3000);
+    return () => clearTimeout(t);
+  }, [armed]);
 
   const present = useMemo(
     () => lobby?.players.filter((p) => !p.has_left) ?? [],
@@ -47,6 +55,8 @@ export function LobbyScreen() {
   }, [lobby?.active_round, code, navigate]);
 
   if (status === 'not_a_member') return <Navigate to={`/join?code=${code}`} replace />;
+  // Removed by the host (or left on another tab): back to the join screen.
+  if (lobby?.me.has_left) return <Navigate to={`/join?code=${code}&left=1`} replace />;
   if (status === 'missing') {
     return (
       <Screen>
@@ -62,7 +72,26 @@ export function LobbyScreen() {
   if (!lobby) return <Screen><Loading label="Finding your group…" /></Screen>;
 
   const me = lobby.me;
-  const everyoneReady = present.every((p) => p.is_ready);
+  const everyoneReady = present.every((p) => p.is_ready || p.is_host);
+
+  async function remove(playerId: string) {
+    if (armed !== playerId) {
+      setArmed(playerId);
+      return;
+    }
+    setArmed(null);
+    setError(null);
+    try {
+      await getBackend().removePlayer(lobby!.group.id, playerId);
+    } catch (err) {
+      const code_ = err instanceof HearthError ? err.code : 'network';
+      setError(
+        code_ === 'round_active'
+          ? 'Wait for the round to finish before removing anyone.'
+          : 'Couldn’t remove that player.',
+      );
+    }
+  }
 
   async function copyLink() {
     const url = `${location.origin}/g/${code}`;
@@ -124,12 +153,17 @@ export function LobbyScreen() {
         ref={playersRef}
         className="scroll-fade mt-4 flex min-h-[3.6rem] max-h-[8.5rem] flex-wrap gap-2"
       >
-        {present.map((p, i) => (
+        {present.map((p, i) => {
+          const removable = me.is_host && p.player_id !== me.player_id;
+          const isArmed = armed === p.player_id;
+          return (
           <div
             key={p.player_id}
-            className={`flex animate-pop-in items-center gap-2 rounded-2xl border-2 py-1.5 pl-1.5 pr-3
-              shadow-pop-sm ${
-                p.is_ready ? 'border-moss/60 bg-moss/10' : 'border-edge/80 bg-slatey/60'
+            className={`flex animate-pop-in items-center gap-2 rounded-2xl border-2 py-1.5 pl-1.5
+              shadow-pop-sm ${removable ? 'pr-1.5' : 'pr-3'} ${
+                isArmed
+                  ? 'border-blood/70 bg-blood/12'
+                  : p.is_ready ? 'border-moss/60 bg-moss/10' : 'border-edge/80 bg-slatey/60'
               }`}
             style={{ animationDelay: `${i * 45}ms` }}
           >
@@ -141,14 +175,30 @@ export function LobbyScreen() {
               </p>
               <p
                 className={`text-[0.62rem] font-extrabold uppercase tracking-wider ${
-                  p.is_host ? 'text-gold' : p.is_ready ? 'text-moss' : 'text-mute'
+                  isArmed ? 'text-blood' : p.is_host ? 'text-gold' : p.is_ready ? 'text-moss' : 'text-mute'
                 }`}
               >
-                {p.is_host ? '★ host' : p.is_ready ? 'ready' : 'not ready'}
+                {isArmed ? 'tap ✕ again' : p.is_host ? '★ host' : p.is_ready ? 'ready' : 'not ready'}
               </p>
             </div>
+            {removable && (
+              <button
+                type="button"
+                onClick={() => void remove(p.player_id)}
+                aria-label={isArmed ? `Remove ${p.nickname}` : `Remove ${p.nickname}?`}
+                className={`ml-0.5 flex h-7 w-7 items-center justify-center rounded-xl border-2 text-xs font-black
+                  transition-colors ${
+                    isArmed
+                      ? 'border-blood/70 bg-blood text-ink'
+                      : 'border-edge/70 bg-ink/40 text-mute'
+                  }`}
+              >
+                ✕
+              </button>
+            )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Games */}
@@ -224,7 +274,7 @@ export function LobbyScreen() {
           )}
           {me.is_host && !everyoneReady && (
             <p className="text-center text-xs text-mute">
-              Waiting on {present.filter((p) => !p.is_ready).map((p) => p.nickname).join(', ')}
+              Waiting on {present.filter((p) => !p.is_ready && !p.is_host).map((p) => p.nickname).join(', ')}
               {' '}— you can start anyway.
             </p>
           )}

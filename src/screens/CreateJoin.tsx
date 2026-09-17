@@ -135,6 +135,7 @@ export function JoinScreen() {
   const [params] = useSearchParams();
 
   const [code, setCode] = useState((params.get('code') ?? '').toUpperCase());
+  const wasRemoved = params.get('left') === '1';
   const [pin, setPin] = useState('');
   const [nickname, setNickname] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<AvatarKey>(randomAvatar);
@@ -209,6 +210,12 @@ export function JoinScreen() {
           </span>
         }
       />
+
+      {wasRemoved && (
+        <p className="mb-5 rounded-[1.4rem] border-2 border-edge bg-slatey/60 p-4 text-center text-sm font-semibold text-mute">
+          You’re no longer in this group. Enter the PIN to join again.
+        </p>
+      )}
 
       <div className="space-y-6">
         <div>

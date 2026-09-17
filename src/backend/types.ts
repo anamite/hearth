@@ -32,6 +32,8 @@ export interface Backend {
   peekGroup(code: string): Promise<{ display_name: string; player_count: number } | null>;
 
   leaveGroup(groupId: string): Promise<void>;
+  /** Host only, between rounds. The player can rejoin with the code and PIN. */
+  removePlayer(groupId: string, playerId: string): Promise<void>;
   setReady(groupId: string, ready: boolean): Promise<void>;
   updateGroupSettings(groupId: string, settings: Partial<GroupSettings>): Promise<void>;
   heartbeat(groupId: string): Promise<void>;

@@ -301,6 +301,22 @@ export class MockBackend implements Backend {
     });
   }
 
+  async removePlayer(groupId: string, playerId: string): Promise<void> {
+    this.tx((db) => {
+      const me = this.me(db, groupId);
+      if (!me.is_host) throw new HearthError('not_host');
+      if (this.activeRound(db, groupId)) throw new HearthError('round_active');
+      const target = db.players.find((p) => p.id === playerId && p.group_id === groupId);
+      if (!target || target.id === me.id) throw new HearthError('invalid_target');
+
+      // Same as them tapping Leave: the row stays, so the code and PIN let
+      // them straight back in (the rejoin path in joinGroup).
+      target.has_left = true;
+      target.is_ready = false;
+      broadcast({ scope: 'group', id: groupId, event: { type: 'players_changed' } });
+    });
+  }
+
   async setReady(groupId: string, ready: boolean): Promise<void> {
     this.tx((db) => {
       this.me(db, groupId).is_ready = ready;
